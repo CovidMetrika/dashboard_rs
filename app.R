@@ -95,7 +95,9 @@ sidebar <- dashboardSidebar(
     menuItem("Dados COVID-19 RS", tabName = "mapa_covid_rs"),
     menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
     menuItem("Fonte de dados", tabName = "fonte"),
-    menuItem("CovidMetrika", tabName = "sobre")
+    menuItem("CovidMetrika", tabName = "sobre"),
+    menuItem("Source Code", icon = icon("code"), badgeColor = "teal", 
+             href = 'https://github.com/CovidMetrika/dashboard_rs/tree/master')
   ),
   width = 180
 )
@@ -301,7 +303,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/franciele.jpg?raw=true',
+                  src = 'franciele.jpg',
                   color = "red",
                   "Contato: franpallaoro@gmail.com",
                   footer_padding = F
@@ -312,7 +314,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/gabriel.jpg?raw=true',
+                  src = 'gabriel.jpg',
                   color = "red",
                   "Contato: gabrielholmersaul@gmail.com",
                   footer_padding = F
@@ -324,7 +326,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/gustavo.png?raw=true',
+                  src = 'gustavo.png',
                   color = "red",
                   "Contato: gustavo.utpott@gmail.com",
                   footer_padding = F
@@ -335,7 +337,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Pós-Graduação em Epidemiologia da UFRGS",
                   type = 2,
                   width = 4,
-                  src =  'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/juliana.jpeg?raw=true',
+                  src =  'juliana.jpeg',
                   color = "red",
                   "Contato: julianass.estatistica@gmail.com",
                   footer_padding = F
@@ -347,7 +349,7 @@ body <- dashboardBody(
                   subtitle = "Professora do departamento de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/marcia.png?raw=true',
+                  src = 'marcia.png',
                   color = "red",
                   "Contato: mhbarbian@ufrgs.br",
                   footer_padding = F
@@ -358,13 +360,13 @@ body <- dashboardBody(
                   subtitle = "Professor do departamento de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/rodrigo.jpg?raw=true',
+                  src = 'rodrigo.jpg',
                   color = "red",
                   "Contato: citton.padilha@ufrgs.br",
                   footer_padding = F
                 ), 
                 
-                tags$img(src = "https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/logos.png?raw=true", 
+                tags$img(src = "logos.png", 
                          height = "150", width = "1000")
               )
             )
