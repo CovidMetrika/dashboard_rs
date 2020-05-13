@@ -78,7 +78,7 @@ widgetUserBoxx <- function (..., title = NULL, subtitle = NULL, type = NULL, bac
                                                                                                                                                   else "box-footer no-padding", footer)))
 }
 
-data_hora_atual <- str_c("Última atualização em ",format(Sys.time(), "%H:%M %d/%m/%Y"))
+data_hora_atual <- str_c("Última atualização em ",format(Sys.time(), "%H:%M %d/%m/%Y"), TZ = "America/Sao_Paulo")
 
 ##############################################################################################
 # Aplicativo
