@@ -78,7 +78,7 @@ widgetUserBoxx <- function (..., title = NULL, subtitle = NULL, type = NULL, bac
                                                                                                                                                   else "box-footer no-padding", footer)))
 }
 
-data_hora_atual <- str_c("Última atualização em ",format(Sys.time(), "%H:%M %d/%m/%Y"))
+data_hora_atual <- str_c("Última atualização em ",format(with_tz(Sys.time(), "America/Sao_Paulo"), "%H:%M %d/%m/%Y"))
 
 ##############################################################################################
 # Aplicativo
@@ -95,9 +95,7 @@ sidebar <- dashboardSidebar(
     menuItem("Dados COVID-19 RS", tabName = "mapa_covid_rs"),
     menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
     menuItem("Fonte de dados", tabName = "fonte"),
-    menuItem("CovidMetrika", tabName = "sobre"),
-    menuItem("Source Code", icon = icon("code"), badgeColor = "teal", 
-             href = 'https://github.com/CovidMetrika/dashboard_rs/tree/master')
+    menuItem("CovidMetrika", tabName = "sobre")
   ),
   width = 180
 )
@@ -292,10 +290,15 @@ body <- dashboardBody(
               fluidRow(
                 
                 setZoom(id = "covidMetrika",class = "small-box"),
+                setZoom(id = "git_covidMetrika",class = "small-box"),
                 
                 column(
-                  width = 12,
+                  width = 6,
                   valueBoxOutput("covidMetrika",width = 12)
+                ),
+                column(
+                  width = 6,
+                  valueBoxOutput("git_covidMetrika", width = 12)
                 ),
               
                 widgetUserBox(
@@ -1481,12 +1484,24 @@ server <- function(input, output) {
   
   output$covidMetrika <- renderValueBox({
     
-    valueBox("covidMetrika", 
-             subtitle = div("Aplicativo desenvolvido pelo grupo covidMetrika",br(),"Confira aqui nosso site para ver nossos outros projetos!",br(),"Contato: covidmetrika@gmail.com"), 
+    valueBox("Site covidMetrika", 
+             subtitle = div("Aplicativo desenvolvido pelo grupo covidMetrika",br(),"Confira aqui nosso site para ver nossos outros projetos!"), 
              icon = icon("external-link-alt"), 
-             color = "yellow", 
+             color = "blue", 
              width = 12,
              href = "https://www.ufrgs.br/covidmetrika/"
+    )
+    
+  })
+  
+  output$git_covidMetrika <- renderValueBox({
+    
+    valueBox("Repositório covidMetrika", 
+             subtitle = div("Confira aqui nosso repositório no GitHub!",br(),"Contato: covidmetrika@gmail.com"), 
+             icon = icon("github"), 
+             color = "blue", 
+             width = 12,
+             href = "https://github.com/CovidMetrika/dashboard_rs"
     )
     
   })
