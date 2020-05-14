@@ -19,6 +19,7 @@ library(plotly)
 library(scales)
 library(shinydashboardPlus)
 library(shinyEffects)
+library(lubridate)
 
 ####
 # Leitura banco de dados
@@ -78,7 +79,7 @@ widgetUserBoxx <- function (..., title = NULL, subtitle = NULL, type = NULL, bac
                                                                                                                                                   else "box-footer no-padding", footer)))
 }
 
-data_hora_atual <- str_c("Última atualização em ",format(Sys.time(), "%H:%M %d/%m/%Y"), TZ = "America/Sao_Paulo")
+data_hora_atual <- str_c("Última atualização em ",format(with_tz(httr::GET("http://www.google.com/")$date, "America/Sao_Paulo"), "%H:%M %d/%m/%Y"))
 
 ##############################################################################################
 # Aplicativo
@@ -224,7 +225,7 @@ body <- dashboardBody(
                 column(
                   width = 4,
                   h3("Selecione as regiões de interesse"),
-                  checkboxGroupInput("filtro_covid",
+                  checkboxGroupInput("filtro_leitos",
                                      label = NULL,
                                      choices = levels(as.factor(dados_covid_rs$mesorregiao)),
                                      selected = levels(as.factor(dados_covid_rs$mesorregiao)),
@@ -737,6 +738,7 @@ server <- function(input, output) {
     
     aux <- dados_covid_rs %>%
       filter(!is.na(!!var) & !!var != 0) %>%
+      filter(mesorregiao %in% input$filtro_covid) %>%
       as.data.frame()
     
     leveis <- levels(as.factor(aux[,input$var_covid_2]))
