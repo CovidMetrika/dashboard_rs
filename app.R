@@ -1524,7 +1524,7 @@ server <- function(input, output) {
     valueBox("Site covidMetrika", 
              subtitle = div("Aplicativo desenvolvido pelo grupo covidMetrika",br(),"Confira aqui nosso site para ver nossos outros projetos!"), 
              icon = icon("external-link-alt"), 
-             color = "blue", 
+             color = "orange", 
              width = 12,
              href = "https://www.ufrgs.br/covidmetrika/"
     )
@@ -1536,7 +1536,7 @@ server <- function(input, output) {
     valueBox("Repositório covidMetrika", 
              subtitle = div("Confira aqui nosso repositório no GitHub!",br(),"Contato: covidmetrika@gmail.com"), 
              icon = icon("github"), 
-             color = "blue", 
+             color = "orange", 
              width = 12,
              href = "https://github.com/CovidMetrika/dashboard_rs"
     )

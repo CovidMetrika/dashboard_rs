@@ -66,6 +66,7 @@ dados_covid_join <- dados_covid_rs %>%
   select(-c(municipio, mesorregiao))
 
 dados_covid_join_meso <- dados_covid_join %>%
+  left_join(rs_mesoregiao_microregiao, by = "codigo") %>%
   group_by(mesorregiao) %>%
   summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
             death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019))
@@ -107,7 +108,8 @@ caminhos <- str_c(pasta, arquivos)
 
 arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.csv","leitos_dados_ses_07_05.csv",
                          "leitos_dados_ses_08_05.csv","leitos_dados_ses_09_05.csv","leitos_dados_ses_10_05.csv",
-                         "leitos_dados_ses_11_05.csv","leitos_dados_ses_12_05.csv","leitos_dados_ses_13_05.csv")
+                         "leitos_dados_ses_11_05.csv","leitos_dados_ses_12_05.csv","leitos_dados_ses_13_05.csv",
+                         "leitos_dados_ses_14_05.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
