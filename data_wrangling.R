@@ -63,7 +63,7 @@ dados_covid_rs <- dados_brasil_io %>%
 dados_covid_join <- dados_covid_rs %>%
   filter(is_last) %>%
   filter(place_type=="city") %>%
-  select(-municipio)
+  select(-c(municipio, mesorregiao))
 
 dados_covid_join_meso <- dados_covid_join %>%
   group_by(mesorregiao) %>%
@@ -76,6 +76,7 @@ dados_covid_join_meso <- dados_covid_join %>%
 # shp municipio
 
 dados_mapa_rs <- mapa_rs_shp %>%
+  left_join(rs_mesoregiao_microregiao, by = c("CD_GEOCMU" = "codigo")) %>%
   left_join(dados_covid_join, by = c("CD_GEOCMU" = "codigo")) %>%
   mutate(codigo = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
@@ -205,6 +206,7 @@ leitos_join_meso <- leitos_uti %>%
 # shp municipio
 
 leitos_mapa_mun_rs <- mapa_rs_shp %>%
+  left_join(rs_mesoregiao_microregiao, by = c("CD_GEOCMU" = "codigo")) %>%
   left_join(leitos_join_mun, by = c("CD_GEOCMU" = "codigo_ibge")) %>%
   mutate(codigo = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
