@@ -243,17 +243,7 @@ body <- dashboardBody(
                   width = 5,
                   plotlyOutput("grafico_leitos", height = "500px")
                 ),
-                column(
-                  width = 9,
-                  uiOutput("ui_serie_leitos")
-                ),
-                column(
-                  width = 3,
-                  box(
-                    dataTableOutput("table_leitos", height = "580px"),
-                    width = 12
-                  )
-                )
+                uiOutput("ui_serie_leitos"),
               )
             )
     ),
@@ -1390,12 +1380,11 @@ server <- function(input, output) {
   
   output$ui_serie_leitos <- renderUI({
     
-    var <- rlang::sym(input$var_leitos)
     var2 <- rlang::sym(input$var_leitos_2)
     
     aux <- leitos_uti %>%
       filter(mesorregiao %in% input$filtro_leitos) %>%
-      filter(!is.na(!!var) & !!var != 0) %>%
+      filter(!is.na(leitos_total) & leitos_total != 0) %>%
       as.data.frame()
     
     leveis <- levels(as.factor(aux[,input$var_leitos_2]))
@@ -1408,69 +1397,175 @@ server <- function(input, output) {
       text2 <- " hospital ou deixe todos selecionados(default)"
     }
     
+    aux_covid <- leitos_uti %>%
+      filter(mesorregiao %in% input$filtro_leitos) %>%
+      filter(!is.na(leitos_covid) & leitos_covid != 0) %>%
+      as.data.frame()
     
+    leveis_covid <- levels(as.factor(aux_covid[,input$var_leitos_2]))
     
-    box(
-      selectInput(
-        "filtro_serie_leitos",
-        label = paste0("Selecione algum",text2),
-        choices = c("Todos selecionados",leveis),
-        selected = "Todos selecionados",
-        multiple = F
+    fluidRow(
+      column(
+        width = 6,
+        box(
+          selectInput(
+            "filtro_serie_leitos_ocup",
+            label = paste0("Selecione algum",text2),
+            choices = c("Todos selecionados",leveis),
+            selected = "Todos selecionados",
+            multiple = F
+          ),
+          plotlyOutput("serie_leitos_ocup", height = 500),
+          width = 12
+        )
       ),
-      plotlyOutput("serie_leitos", height = 500),
-      width = 12
+      column(
+        width = 6,
+        box(
+          selectInput(
+            "filtro_serie_leitos_disp",
+            label = paste0("Selecione algum",text2),
+            choices = c("Todos selecionados",leveis),
+            selected = "Todos selecionados",
+            multiple = F
+          ),
+          plotlyOutput("serie_leitos_disp", height = 500),
+          width = 12
+        )
+      ),
+      column(
+        width = 9,
+        box(
+          selectInput(
+            "filtro_serie_leitos_covid",
+            label = paste0("Selecione algum",text2),
+            choices = c("Todos selecionados",leveis_covid),
+            selected = "Todos selecionados",
+            multiple = F
+          ),
+          plotlyOutput("serie_leitos_covid", height = 500),
+          width = 12
+        )
+      ),
+      column(
+        width = 3,
+        box(
+          dataTableOutput("table_leitos", height = "580px"),
+          width = 12
+        )
+      )
     )
+    
+  
+    
     
   })
   
-  #############
-  # serie_leitos
   
-  output$serie_leitos <- renderPlotly({
+  
+  #############
+  # serie_leitos_ocup
+  
+  output$serie_leitos_ocup <- renderPlotly({
     
     var2 <- rlang::sym(input$var_leitos_2)
     
     aux <- leitos_uti
     
-    if(input$filtro_serie_leitos != "Todos selecionados") {
+    if(input$filtro_serie_leitos_ocup != "Todos selecionados") {
       aux <- aux %>%
-        mutate(var2 = !!var2) %>%
-        filter(var2 == input$filtro_serie_leitos)
+        filter(!!var2 == input$filtro_serie_leitos_ocup)
     }
     
     aux <- aux %>%
       filter(mesorregiao %in% input$filtro_leitos) %>%
       group_by(data_atualizacao) %>%
-      summarise(`Leitos com covid` = sum(leitos_covid, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
+      summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
                 `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
-      arrange(data_atualizacao) %>%
-      pivot_longer(-data_atualizacao, names_to = "leito_tipo", values_to = "Quantidade")
+      arrange(data_atualizacao)
     
     ordem <- as.character(format(unique(aux$data_atualizacao), "%d-%m"))
     
     aux$data_atualizacao <- as.character(format(aux$data_atualizacao, "%d-%m"))
     
-    leitos_total <- aux %>%
-      filter(leito_tipo == "Total leitos")
     
-    lotacao_media <- aux %>%
-      filter(leito_tipo == "lotacao")
+    p <- ggplot(aux) +
+      geom_col(aes(x = data_atualizacao, y = `Leitos ocupados`, label = lotacao), fill = "#605ca8") +
+      geom_line(aes(x = data_atualizacao, y = `Total leitos`, group = 1), color = "#00a65a") +
+      geom_point(aes(x = data_atualizacao, y = `Total leitos`), color = "#00a65a") +
+      scale_x_discrete(limits = ordem)
     
-    lotacao_media <- rep(lotacao_media$Quantidade, each = 2)
+    ggplotly(p)
+      
+   
+  })
+  
+  #############
+  # serie_leitos_disp
+  
+  output$serie_leitos_disp <- renderPlotly({
+    
+    var2 <- rlang::sym(input$var_leitos_2)
+    
+    aux <- leitos_uti
+    
+    if(input$filtro_serie_leitos_disp != "Todos selecionados") {
+      aux <- aux %>%
+        filter(!!var2 == input$filtro_serie_leitos_disp)
+    }
     
     aux <- aux %>%
-      filter(leito_tipo %in% c("Leitos sem covid","Leitos com covid"))
+      filter(mesorregiao %in% input$filtro_leitos) %>%
+      group_by(data_atualizacao) %>%
+      summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos disponíveis` = sum(leitos_total-leitos_internacoes, na.rm =T),
+                `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
+      arrange(data_atualizacao)
     
-    paleta <- list("Leitos sem covid" = "#605ca8",
-                   "Leitos com covid" = "#d81b60")
+    ordem <- as.character(format(unique(aux$data_atualizacao), "%d-%m"))
     
-    p <- ggplot() +
-      geom_col(data = aux, aes(x = data_atualizacao, y = Quantidade, fill = leito_tipo, label = lotacao_media), position = position_stack(reverse = T)) +
-      geom_line(data = leitos_total, aes(x = data_atualizacao, y = Quantidade, group = 1), color = "#00a65a") +
-      geom_point(data = leitos_total, aes(x = data_atualizacao, y = Quantidade), color = "#00a65a") +
-      scale_fill_manual(values = paleta) +
+    aux$data_atualizacao <- as.character(format(aux$data_atualizacao, "%d-%m"))
+    
+    p <- ggplot(aux) +
+      geom_col(aes(x = data_atualizacao, y = `Leitos disponíveis`), fill = "#0073b7") +
+      geom_line(aes(x = data_atualizacao, y = `Total leitos`, group = 1), color = "#00a65a") +
+      geom_point(aes(x = data_atualizacao, y = `Total leitos`), color = "#00a65a") +
       scale_x_discrete(limits = ordem)
+    
+    ggplotly(p)
+    
+    
+  })
+  
+  #############
+  # serie_leitos_covid
+  
+  output$serie_leitos_covid <- renderPlotly({
+    
+    var2 <- rlang::sym(input$var_leitos_2)
+    
+    aux <- leitos_uti
+    
+    if(input$filtro_serie_leitos_covid != "Todos selecionados") {
+      aux <- aux %>%
+        filter(!!var2 == input$filtro_serie_leitos_covid)
+    }
+    
+    aux <- aux %>%
+      filter(mesorregiao %in% input$filtro_leitos) %>%
+      group_by(data_atualizacao) %>%
+      summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos com covid` = sum(leitos_covid, na.rm =T),
+                `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
+      arrange(data_atualizacao)
+    
+    ordem <- as.character(format(unique(aux$data_atualizacao), "%d-%m"))
+    
+    aux$data_atualizacao <- as.character(format(aux$data_atualizacao, "%d-%m"))
+    
+    
+    p <- ggplot(aux) +
+      geom_col(aes(x = data_atualizacao, y = `Leitos com covid`), fill = "#d81b60") +
+      scale_x_discrete(limits = ordem) +
+      scale_y_continuous(limits = c(0,max(aux$`Leitos com covid`+20)))
     
     ggplotly(p)
     
