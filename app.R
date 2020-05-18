@@ -1498,7 +1498,7 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
    
     p = p + facet_grid(. ~ titulo) +
-      theme(strip.background = element_rect(fill="red"),
+      theme(strip.background = element_rect(fill="#605ca8"),
             strip.text = element_text(size=15, colour="white"))
     
     
@@ -1544,7 +1544,7 @@ server <- function(input, output) {
     
     
     p = p + facet_grid(. ~ titulo) +
-              theme(strip.background = element_rect(fill="#228b22"),
+              theme(strip.background = element_rect(fill="#0073b7"),
               strip.text = element_text(size=15, colour="white"))
     
     ggplotly(p)
@@ -1587,7 +1587,7 @@ server <- function(input, output) {
       theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
     
     p = p + facet_grid(. ~ titulo) +
-              theme(strip.background = element_rect(fill="red"),
+              theme(strip.background = element_rect(fill = "#d81b60"),
               strip.text = element_text(size=15, colour="white"))
     
     
