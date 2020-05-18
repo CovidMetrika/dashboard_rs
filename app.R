@@ -79,7 +79,7 @@ widgetUserBoxx <- function (..., title = NULL, subtitle = NULL, type = NULL, bac
                                                                                                                                                   else "box-footer no-padding", footer)))
 }
 
-data_hora_atual <- str_c("Última atualização em ",format(with_tz(httr::GET("http://www.google.com/")$date, "America/Sao_Paulo"), "%H:%M %d/%m/%Y"))
+#data_hora_atual <- str_c("Última atualização em ",format(with_tz(httr::GET("http://www.google.com/")$date, "America/Sao_Paulo"), "%H:%M %d/%m/%Y"))
 
 ##############################################################################################
 # Aplicativo
@@ -110,7 +110,7 @@ body <- dashboardBody(
                 column(
                   width = 12,
                   h1("Dados do COVID-19 Rio Grande do Sul"),
-                  h5(em(data_hora_atual))
+                 # h5(em(data_hora_atual))
                 )
               ),
               
@@ -194,7 +194,7 @@ body <- dashboardBody(
                 column(
                   width = 12,
                   h1("Dados dos leitos UTI - Adulto no Rio Grande do Sul"),
-                  h5(em(data_hora_atual))
+                #  h5(em(data_hora_atual))
                 )
               ),
               fluidRow(
@@ -1488,13 +1488,21 @@ server <- function(input, output) {
     
     aux$data_atualizacao <- as.character(format(aux$data_atualizacao, "%d-%m"))
     
+    aux$titulo <- "Quantidade de Leitos de UTI OCUPADOS dado o dia"
     
     p <- ggplot(aux) +
       geom_col(aes(x = data_atualizacao, y = `Leitos ocupados`, label = lotacao), fill = "#605ca8") +
       geom_line(aes(x = data_atualizacao, y = `Total leitos`, group = 1), color = "#00a65a") +
       geom_point(aes(x = data_atualizacao, y = `Total leitos`), color = "#00a65a") +
-      scale_x_discrete(limits = ordem)
+      scale_x_discrete(limits = ordem) +
+      theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
+   
+    p = p + facet_grid(. ~ titulo) +
+      theme(strip.background = element_rect(fill="red"),
+            strip.text = element_text(size=15, colour="white"))
     
+    
+     
     ggplotly(p)
       
    
@@ -1525,11 +1533,19 @@ server <- function(input, output) {
     
     aux$data_atualizacao <- as.character(format(aux$data_atualizacao, "%d-%m"))
     
+    aux$titulo <- "Quantidade de Leitos de UTI DISPONÍVEIS dado o dia"
+    
     p <- ggplot(aux) +
       geom_col(aes(x = data_atualizacao, y = `Leitos disponíveis`), fill = "#0073b7") +
       geom_line(aes(x = data_atualizacao, y = `Total leitos`, group = 1), color = "#00a65a") +
       geom_point(aes(x = data_atualizacao, y = `Total leitos`), color = "#00a65a") +
-      scale_x_discrete(limits = ordem)
+      scale_x_discrete(limits = ordem) +
+      theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
+    
+    
+    p = p + facet_grid(. ~ titulo) +
+              theme(strip.background = element_rect(fill="#228b22"),
+              strip.text = element_text(size=15, colour="white"))
     
     ggplotly(p)
     
@@ -1561,11 +1577,19 @@ server <- function(input, output) {
     
     aux$data_atualizacao <- as.character(format(aux$data_atualizacao, "%d-%m"))
     
+    aux$titulo <- "Quantidade de Leitos de UTI OCUPADOS com pacientes com covid-19 dado o dia"
+    
     
     p <- ggplot(aux) +
       geom_col(aes(x = data_atualizacao, y = `Leitos com covid`), fill = "#d81b60") +
       scale_x_discrete(limits = ordem) +
-      scale_y_continuous(limits = c(0,max(aux$`Leitos com covid`+20)))
+      scale_y_continuous(limits = c(0,max(aux$`Leitos com covid`+20))) +
+      theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
+    
+    p = p + facet_grid(. ~ titulo) +
+              theme(strip.background = element_rect(fill="red"),
+              strip.text = element_text(size=15, colour="white"))
+    
     
     ggplotly(p)
     
