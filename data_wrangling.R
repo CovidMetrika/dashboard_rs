@@ -225,6 +225,9 @@ semana <- read_csv("dados/semana_epidemio_dia.csv")
 dados_covid_rs <- dados_covid_rs %>%
   left_join(semana, by = c("date" = "dia"))
 
+leitos_uti <- leitos_uti %>%
+  left_join(semana, by = c("data_atualizacao" = "dia"))
+
 # deixando só os objetos essenciais
 
 rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_meso_rs","leitos_uti","dados_mapa_rs_meso",

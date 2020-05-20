@@ -1407,47 +1407,62 @@ server <- function(input, output) {
     fluidRow(
       column(
         width = 6,
-        box(
-          selectInput(
-            "filtro_serie_leitos_ocup",
-            label = paste0("Selecione algum",text2),
-            choices = c("Todos selecionados",leveis),
-            selected = "Todos selecionados",
-            multiple = F
-          ),
-          title = "Quantidade de Leitos de UTI OCUPADOS dado o dia",
-          plotlyOutput("serie_leitos_ocup", height = 500),
-          width = 12
+        tabBox(
+          id = "tab_ocup",
+          title = "Quantidade de Leitos de UTI OCUPADOS ao longo do tempo",
+          width = 12,
+          tabPanel("Diário",
+                   plotlyOutput("serie_leitos_ocup_dia", height = 500)),
+          tabPanel("Semana Epidemiológica",
+                   plotlyOutput("serie_leitos_ocup_sem", height = 500)),
+          tabPanel("Filtro",
+                   selectInput(
+                     "filtro_serie_leitos_ocup",
+                     label = paste0("Selecione algum",text2),
+                     choices = c("Todos selecionados",leveis),
+                     selected = "Todos selecionados",
+                     multiple = F
+                   )) 
         )
       ),
       column(
         width = 6,
-        box(
-          selectInput(
-            "filtro_serie_leitos_disp",
-            label = paste0("Selecione algum",text2),
-            choices = c("Todos selecionados",leveis),
-            selected = "Todos selecionados",
-            multiple = F
-          ),
-          title = "Quantidade de Leitos de UTI DISPONÍVEIS dado o dia",
-          plotlyOutput("serie_leitos_disp", height = 500),
-          width = 12
+        tabBox(
+          id = "tab_disp",
+          title = "Quantidade de Leitos de UTI DISPONÍVEIS ao longo do tempo",
+          width = 12,
+          tabPanel("Diário",
+                   plotlyOutput("serie_leitos_disp_dia", height = 500)),
+          tabPanel("Semana Epidemiológica",
+                   plotlyOutput("serie_leitos_disp_sem", height = 500)),
+          tabPanel("Filtro",
+                   selectInput(
+                     "filtro_serie_leitos_disp",
+                     label = paste0("Selecione algum",text2),
+                     choices = c("Todos selecionados",leveis),
+                     selected = "Todos selecionados",
+                     multiple = F
+                   ))
         )
       ),
       column(
         width = 9,
-        box(
-          selectInput(
-            "filtro_serie_leitos_covid",
-            label = paste0("Selecione algum",text2),
-            choices = c("Todos selecionados",leveis_covid),
-            selected = "Todos selecionados",
-            multiple = F
-          ),
-          title = "Quantidade de Leitos de UTI OCUPADOS com pacientes com covid-19 dado o dia",
-          plotlyOutput("serie_leitos_covid", height = 500),
-          width = 12
+        tabBox(
+          id = "tab_covid",
+          title = "Quantidade de Leitos de UTI OCUPADOS com pacientes com covid-19 ao longo do tempo",
+          width = 12,
+          tabPanel("Diário",
+                   plotlyOutput("serie_leitos_covid_dia", height = 500)),
+          tabPanel("Semana Epidemiológica",
+                   plotlyOutput("serie_leitos_covid_sem", height = 500)),
+          tabPanel("Filtro",
+                   selectInput(
+                     "filtro_serie_leitos_covid",
+                     label = paste0("Selecione algum",text2),
+                     choices = c("Todos selecionados",leveis_covid),
+                     selected = "Todos selecionados",
+                     multiple = F
+                   ))
         )
       ),
       column(
@@ -1467,9 +1482,9 @@ server <- function(input, output) {
   
   
   #############
-  # serie_leitos_ocup
+  # serie_leitos_ocup_dia
   
-  output$serie_leitos_ocup <- renderPlotly({
+  output$serie_leitos_ocup_dia <- renderPlotly({
     
     var2 <- rlang::sym(input$var_leitos_2)
     
@@ -1504,9 +1519,49 @@ server <- function(input, output) {
   })
   
   #############
-  # serie_leitos_disp
+  # serie_leitos_ocup_sem
   
-  output$serie_leitos_disp <- renderPlotly({
+  output$serie_leitos_ocup_sem <- renderPlotly({
+    
+    var2 <- rlang::sym(input$var_leitos_2)
+    
+    aux <- leitos_uti
+    
+    if(input$filtro_serie_leitos_ocup != "Todos selecionados") {
+      aux <- aux %>%
+        filter(!!var2 == input$filtro_serie_leitos_ocup)
+    }
+    
+    aux <- aux %>%
+      filter(mesorregiao %in% input$filtro_leitos) %>%
+      group_by(data_atualizacao, semana_epidemiologica) %>%
+      summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
+                `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
+      group_by(semana_epidemiologica) %>%
+      summarise(`Leitos ocupados` = mean(`Leitos ocupados`, na.rm = T), 
+                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) %>%
+      arrange(semana_epidemiologica)
+    
+    ordem <- as.character(unique(aux$semana_epidemiologica))
+    
+    aux$semana_epidemiologica <- as.character(aux$semana_epidemiologica)
+    
+    p <- ggplot(aux) +
+      geom_col(aes(x = semana_epidemiologica, y = `Leitos ocupados`, label = lotacao), fill = "#605ca8") +
+      geom_line(aes(x = semana_epidemiologica, y = `Total leitos`, group = 1), color = "#00a65a") +
+      geom_point(aes(x = semana_epidemiologica, y = `Total leitos`), color = "#00a65a") +
+      scale_x_discrete(limits = ordem) +
+      labs(y = "Média semanal de leitos ocupados") +
+      theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
+    
+    ggplotly(p)
+    
+  })
+  
+  #############
+  # serie_leitos_disp_dia
+  
+  output$serie_leitos_disp_dia <- renderPlotly({
     
     var2 <- rlang::sym(input$var_leitos_2)
     
@@ -1541,9 +1596,49 @@ server <- function(input, output) {
   })
   
   #############
-  # serie_leitos_covid
+  # serie_leitos_disp_sem
   
-  output$serie_leitos_covid <- renderPlotly({
+  output$serie_leitos_disp_sem <- renderPlotly({
+    
+    var2 <- rlang::sym(input$var_leitos_2)
+    
+    aux <- leitos_uti
+    
+    if(input$filtro_serie_leitos_disp != "Todos selecionados") {
+      aux <- aux %>%
+        filter(!!var2 == input$filtro_serie_leitos_disp)
+    }
+    
+    aux <- aux %>%
+      filter(mesorregiao %in% input$filtro_leitos) %>%
+      group_by(data_atualizacao, semana_epidemiologica) %>%
+      summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
+                `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
+      group_by(semana_epidemiologica) %>%
+      summarise(`Leitos ocupados` = mean(`Leitos ocupados`, na.rm = T), `Leitos disponíveis` = mean(`Total leitos`, na.rm = T) - mean(`Leitos ocupados`, na.rm = T),
+                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) %>%
+      arrange(semana_epidemiologica)
+    
+    ordem <- as.character(unique(aux$semana_epidemiologica))
+    
+    aux$semana_epidemiologica <- as.character(aux$semana_epidemiologica)
+    
+    p <- ggplot(aux) +
+      geom_col(aes(x = semana_epidemiologica, y = `Leitos disponíveis`), fill = "#0073b7") +
+      geom_line(aes(x = semana_epidemiologica, y = `Total leitos`, group = 1), color = "#00a65a") +
+      geom_point(aes(x = semana_epidemiologica, y = `Total leitos`), color = "#00a65a") +
+      scale_x_discrete(limits = ordem) +
+      labs(y = "Média semanal de leitos disponíveis") +
+      theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
+    
+    ggplotly(p)
+    
+  })
+  
+  #############
+  # serie_leitos_covid_dia
+  
+  output$serie_leitos_covid_dia <- renderPlotly({
     
     var2 <- rlang::sym(input$var_leitos_2)
     
@@ -1571,6 +1666,44 @@ server <- function(input, output) {
       scale_y_continuous(limits = c(0,max(aux$`Leitos com covid`+20))) +
       theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5)) 
 
+    ggplotly(p)
+    
+  })
+  
+  #############
+  # serie_leitos_covid_sem
+  
+  output$serie_leitos_covid_sem <- renderPlotly({
+    
+    var2 <- rlang::sym(input$var_leitos_2)
+    
+    aux <- leitos_uti
+    
+    if(input$filtro_serie_leitos_covid != "Todos selecionados") {
+      aux <- aux %>%
+        filter(!!var2 == input$filtro_serie_leitos_covid)
+    }
+    
+    aux <- aux %>%
+      filter(mesorregiao %in% input$filtro_leitos) %>%
+      group_by(data_atualizacao, semana_epidemiologica) %>%
+      summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
+                `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T), `Leitos com covid` = sum(leitos_covid, na.rm = T)) %>%
+      group_by(semana_epidemiologica) %>%
+      summarise(`Leitos ocupados` = mean(`Leitos ocupados`, na.rm = T), `Leitos com covid` = mean(`Leitos com covid`, na.rm = T),
+                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) %>%
+      arrange(semana_epidemiologica)
+    
+    ordem <- as.character(unique(aux$semana_epidemiologica))
+    
+    aux$semana_epidemiologica <- as.character(aux$semana_epidemiologica)
+    
+    p <- ggplot(aux) +
+      geom_col(aes(x = semana_epidemiologica, y = `Leitos com covid`), fill = "#d81b60") +
+      scale_x_discrete(limits = ordem) +
+      scale_y_continuous(name = "Média semanal de leitos com covid", limits = c(0,max(aux$`Leitos com covid`+20))) +
+      theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5)) 
+    
     ggplotly(p)
     
   })
