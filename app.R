@@ -25,6 +25,9 @@ library(lubridate)
 # Leitura banco de dados
 ####
 
+options(OutDec= ",") #Muda de ponto para virgula nos decimais! 
+
+
 # rodando o script de data_wrangling
 
 source("data_wrangling.R", encoding = "UTF-8")
