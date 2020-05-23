@@ -111,7 +111,7 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_11_05.csv","leitos_dados_ses_12_05.csv","leitos_dados_ses_13_05.csv",
                          "leitos_dados_ses_14_05.csv","leitos_dados_ses_15_05.csv","leitos_dados_ses_16_05.csv",
                          "leitos_dados_ses_17_05.csv","leitos_dados_ses_18_05.csv","leitos_dados_ses_19_05.csv",
-                         "leitos_dados_ses_20_05.csv","leitos_dados_ses_21_05.csv")
+                         "leitos_dados_ses_20_05.csv","leitos_dados_ses_21_05.csv","leitos_dados_ses_22_05.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
@@ -138,6 +138,13 @@ leitos_uti <- merge(leitos_uti, rs_mesoregiao_microregiao, by = "codigo", all = 
   filter(data_atualizacao > "2020-04-27") %>%
   select(-data_hora_atualizacao) %>%
   arrange(data_atualizacao)
+
+# resolvendo problema da mudança de nome no hospital de uruguaiana
+# nome antigo: Santa Casa De Uruguaiana
+# nome novo: Hospital Santa Casa De Uruguaiana
+
+leitos_uti <- leitos_uti %>%
+  mutate(hospital = ifelse(cnes == 2248190,"Hospital Santa Casa De Uruguaiana",hospital))
 
 # resolvendo problema dos dados incompletos
 # pegando dados de dias anteriores para os dias sem dado
