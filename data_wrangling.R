@@ -15,7 +15,8 @@ library(abjutils)
 # lendo shapefiles RS municipios
 
 mapa_rs_shp <- sf::st_read("dados/shapefiles/43MUE250GC_SIR.shp", quiet = TRUE) %>%
-  mutate(municipio = str_to_title(NM_MUNICIP))
+  mutate(municipio = str_to_title(NM_MUNICIP),
+         codigo_ibge = as.character(CD_GEOCMU))
 
 mapa_rs_shp[mapa_rs_shp$municipio=="Westfalia","municipio"] <- "Westfália"
 mapa_rs_shp[mapa_rs_shp$municipio=="Vespasiano Correa","municipio"] <- "Vespasiano Corrêa"
@@ -27,7 +28,7 @@ mapa_meso_rs <- sf::st_read("dados/shapefiles/43MEE250GC_SIR.shp", quiet = TRUE)
 
 # criando um objeto para atribuir códigos ibge às cidades
 
-codigos_cidades <- tibble(municipio = mapa_rs_shp$municipio, codigo = mapa_rs_shp$CD_GEOCMU)
+codigos_cidades <- tibble(municipio = mapa_rs_shp$municipio, codigo_ibge = mapa_rs_shp$codigo_ibge)
 
 codigos_cidades_sem_acento <- codigos_cidades %>%
   mutate(municipio = rm_accent(municipio))
@@ -55,9 +56,9 @@ dados_covid_rs <- dados_brasil_io %>%
   mutate(date = as.Date(date)) %>%
   filter(state == "RS") %>%
   mutate(municipio = str_to_title(city)) %>%
-  mutate(codigo = factor(city_ibge_code, levels = levels(codigos_cidades$codigo))) %>%
-  left_join(rs_mesoregiao_microregiao, by = "codigo") %>%
-  select(date,confirmed,deaths,is_last,codigo,municipio,confirmed_per_100k_inhabitants,death_rate,place_type,mesorregiao,estimated_population_2019)
+  mutate(codigo_ibge = as.character(city_ibge_code)) %>%
+  left_join(rs_mesoregiao_microregiao, by = "codigo_ibge") %>%
+  select(date,confirmed,deaths,is_last,codigo_ibge,municipio,confirmed_per_100k_inhabitants,death_rate,place_type,mesorregiao,estimated_population_2019)
   
 
 dados_covid_join <- dados_covid_rs %>%
@@ -66,7 +67,7 @@ dados_covid_join <- dados_covid_rs %>%
   select(-c(municipio, mesorregiao))
 
 dados_covid_join_meso <- dados_covid_join %>%
-  left_join(rs_mesoregiao_microregiao, by = "codigo") %>%
+  left_join(rs_mesoregiao_microregiao, by = "codigo_ibge") %>%
   group_by(mesorregiao) %>%
   summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
             death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019))
@@ -77,14 +78,14 @@ dados_covid_join_meso <- dados_covid_join %>%
 # shp municipio
 
 dados_mapa_rs <- mapa_rs_shp %>%
-  left_join(rs_mesoregiao_microregiao, by = c("CD_GEOCMU" = "codigo")) %>%
-  left_join(dados_covid_join, by = c("CD_GEOCMU" = "codigo")) %>%
-  mutate(codigo = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
+  left_join(rs_mesoregiao_microregiao, by = c("codigo_ibge")) %>%
+  left_join(dados_covid_join, by = c("codigo_ibge")) %>%
+  mutate(codigo_ibge = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
 # shp mesoregiao
 
 dados_mapa_rs_meso <- mapa_meso_rs %>%
-  left_join(dados_covid_join_meso, by = c("mesorregiao" = "mesorregiao"))
+  left_join(dados_covid_join_meso, by = c("mesorregiao"))
 
 
 #################################
@@ -92,7 +93,7 @@ dados_mapa_rs_meso <- mapa_meso_rs %>%
 #################################
 
 hospital_municipio <- read_csv("dados/leitos/outros/hospital_municipio.csv") %>%
-  mutate(codigo = as.factor(codigo_ibge))
+  mutate(codigo_ibge = as.character(codigo_ibge))
 
 dados_cnes <- read_csv("dados/leitos/outros/base_cnes_atualizada.csv") %>%
   select(CNES, LATITUDE, LONGITUDE)
@@ -128,13 +129,12 @@ leitos_uti <- map(caminhos, read_csv) %>%
   bind_rows(arruma_nome) %>% # adicionando arquivos bugados
   left_join(hospital_municipio, by = c("Cód" = "cnes")) 
 
-leitos_uti <- merge(leitos_uti, rs_mesoregiao_microregiao, by = "codigo", all = TRUE) %>%
+leitos_uti <- merge(leitos_uti, rs_mesoregiao_microregiao, by = "codigo_ibge", all = TRUE) %>%
   mutate(data_atualizacao = lubridate::as_date(`Últ Atualização`, format = "%d/%m/%Y",  tz = "America/Sao_Paulo"),
          Hospital = str_to_title(Hospital)) %>%
   distinct(`Cód`, data_atualizacao, .keep_all = T) %>%
   select(data_atualizacao = data_atualizacao, cnes = Cód, hospital = Hospital, codigo_ibge = codigo_ibge, municipio, leitos_internacoes = Pacientes,
          leitos_total = Leitos, leitos_covid = Confirmados, meso_regiao = mesorregiao, data_hora_atualizacao = `Últ Atualização`) %>%
-  mutate(codigo_ibge = factor(codigo_ibge, levels = levels(mapa_rs_shp$CD_GEOCMU))) %>%
   left_join(dados_cnes, by = c("cnes" = "CNES")) %>%
   filter(data_atualizacao > "2020-04-27") %>%
   select(-data_hora_atualizacao) %>%
@@ -218,9 +218,9 @@ leitos_join_meso <- leitos_uti %>%
 # shp municipio
 
 leitos_mapa_mun_rs <- mapa_rs_shp %>%
-  left_join(rs_mesoregiao_microregiao, by = c("CD_GEOCMU" = "codigo")) %>%
-  left_join(leitos_join_mun, by = c("CD_GEOCMU" = "codigo_ibge")) %>%
-  mutate(codigo = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
+  left_join(rs_mesoregiao_microregiao, by = c("codigo_ibge")) %>%
+  left_join(leitos_join_mun, by = c("codigo_ibge")) %>%
+  mutate(codigo_ibge = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
 # shp mesoregiao
 
