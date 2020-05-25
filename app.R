@@ -25,7 +25,7 @@ library(lubridate)
 # Leitura banco de dados
 ####
 
-options(OutDec= ",") #Muda de ponto para virgula nos decimais! 
+options(OutDec= ",") # Muda de ponto para virgula nos decimais! 
 
 
 # rodando o script de data_wrangling
