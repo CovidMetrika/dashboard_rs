@@ -343,7 +343,7 @@ body <- dashboardBody(
                 
                 widgetUserBox(
                   title = tags$b("Márcia Helena Barbian"),
-                  subtitle = "Professora do departamento de Estatística da UFRGS",
+                  subtitle = "Professora do Departamento de Estatística da UFRGS",
                   type = 2,
                   width = 4,
                   src = 'marcia.png',
@@ -354,7 +354,7 @@ body <- dashboardBody(
                 
                 widgetUserBox(
                   title = tags$b("Rodrigo Citton P. dos Reis"),
-                  subtitle = "Professor do departamento de Estatística da UFRGS",
+                  subtitle = "Professor do Departamento de Estatística da UFRGS",
                   type = 2,
                   width = 4,
                   src = 'rodrigo.jpg',
