@@ -20,6 +20,7 @@ library(scales)
 library(shinydashboardPlus)
 library(shinyEffects)
 library(lubridate)
+library(ggthemes)
 
 ####
 # Leitura banco de dados
@@ -183,6 +184,10 @@ body <- dashboardBody(
                     dataTableOutput("table_covid", height = "480px"),
                     width = 12
                   )
+                ),
+                column(
+                  width = 12,
+                  uiOutput("ui_filtro_quadradinhos")
                 )
               )
             )
@@ -960,6 +965,74 @@ server <- function(input, output) {
     
     ggplotly(p) 
     
+  })
+  
+  # ui_filtro_quadradinhos
+  output$ui_filtro_quadradinhos <- renderUI({
+    
+    var <- rlang::sym(input$var_covid)
+    var2 <- rlang::sym(input$var_covid_2)
+    
+    aux <- dados_covid_rs %>%
+      filter(place_type == "city") %>%
+      filter(is_last) %>%
+      filter(mesorregiao %in% input$filtro_covid) %>%
+      group_by(!!var2) %>%
+      summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
+                death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019))  %>%
+      arrange(desc(!!var))
+    
+    aux <- as.data.frame(aux)
+
+    box(
+      width = 12,
+      selectInput(
+        "filtro_quadradinhos",
+        label = "Selecione os municípios de interesse(por default estão os 15 de maior quantidade da variável escolhida)",
+        choices = aux[,input$var_covid_2],
+        selected = aux[1:15,input$var_covid_2],
+        multiple = T
+      ),
+      plotlyOutput("plot_quadradinhos", height = 650L)
+    )
+    
+  })
+  
+  output$plot_quadradinhos <- renderPlotly({
+    
+    var <- rlang::sym(input$var_covid)
+    var2 <- rlang::sym(input$var_covid_2)
+    
+    if(input$var_covid == "confirmed") {
+      paleta <- "Reds"
+      texto <- "Casos confirmados"
+    } else if(input$var_covid == "deaths") {
+      paleta <- "Greys"
+      texto <- "Óbitos confirmados"
+    } else if(input$var_covid == "confirmed_per_100k_inhabitants") {
+      paleta <- "Oranges"
+      texto <- "Casos por 100mil habitantes"
+    } else {
+      paleta <- "Purples"
+      texto <- "Letalidade"
+    }
+
+    aux <- dados_covid_rs %>%
+      filter(place_type == "city") %>%
+      filter(!!var2 %in% input$filtro_quadradinhos) %>%
+      group_by(!!var2,date) %>%
+      summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
+                death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019)) %>%
+      arrange(date)
+    
+    aux <- as.data.frame(aux)
+    
+    p <- ggplot(aux, aes(x = date, y = !!var2, fill = !!var)) +
+      geom_tile() +
+      scale_fill_gradientn(name = texto,colours = brewer.pal(9,paleta)) +
+      theme_tufte(base_family="Helvetica")
+    
+    ggplotly(p)
   })
   
   ###############################
