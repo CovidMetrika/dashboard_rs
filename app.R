@@ -287,10 +287,6 @@ body <- dashboardBody(
     tabItem("sobre",
             fluidPage(
               fluidRow(
-                
-                setZoom(id = "covidMetrika",class = "small-box"),
-                setZoom(id = "git_covidMetrika",class = "small-box"),
-                
                 column(
                   width = 6,
                   valueBoxOutput("covidMetrika",width = 12)
