@@ -110,6 +110,10 @@ body <- dashboardBody(
   tabItems(
     tabItem("mapa_covid_rs",
             fluidPage(
+              # incluindo o script do google analytics para acompanhamento de dados
+              
+              tags$head(includeHTML(("google_analytics.html"))),
+              
               titlePanel(
                 column(
                   width = 12,
