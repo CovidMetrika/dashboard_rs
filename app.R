@@ -21,6 +21,7 @@ library(shinydashboardPlus)
 library(shinyEffects)
 library(lubridate)
 library(ggthemes)
+library(shinyalert)
 
 ####
 # Leitura banco de dados
@@ -113,6 +114,10 @@ body <- dashboardBody(
               # incluindo o script do google analytics para acompanhamento de dados
               
               tags$head(includeHTML(("google_analytics.html"))),
+              
+              # para a mensagem de popup
+              
+              useShinyalert(),
               
               titlePanel(
                 column(
@@ -384,6 +389,8 @@ ui <- dashboardPage(header = header, sidebar = sidebar, body = body, skin = "red
 
 
 server <- function(input, output) {
+  
+  shinyalert("Olá", "Caso você esteja acessando o dashboard pelo celular, sugerimos que o coloque na posição horizontal para uma melhor visualização dos gráficos!", type = "info")
   
   ###############################
   ####### first tabItem #########
