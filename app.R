@@ -98,8 +98,8 @@ header <- dashboardHeader(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Dados COVID-19 RS", tabName = "mapa_covid_rs"),
     menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
+    menuItem("Dados COVID-19 RS", tabName = "mapa_covid_rs"),
     menuItem("Fonte de dados", tabName = "fonte"),
     menuItem("CovidMetrika", tabName = "sobre")
   ),
@@ -1036,7 +1036,7 @@ server <- function(input, output) {
     
     p <- ggplot(aux, aes(x = date, y = !!var2, fill = !!var)) +
       geom_tile() +
-      scale_fill_gradientn(name = texto, trans = "sqrt", colours = brewer.pal(9,paleta)) +
+      scale_fill_gradientn(name = texto, colours = brewer.pal(9,paleta)) +
       scale_x_date(date_breaks = "1 month", date_labels = "%b") +
       theme_tufte(base_family="Helvetica")
     
