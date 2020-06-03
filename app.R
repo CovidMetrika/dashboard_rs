@@ -1036,7 +1036,7 @@ server <- function(input, output) {
     
     p <- ggplot(aux, aes(x = date, y = !!var2, fill = !!var)) +
       geom_tile() +
-      scale_fill_gradientn(name = texto, colours = brewer.pal(9,paleta)) +
+      scale_fill_gradientn(name = texto, trans = "sqrt", colours = brewer.pal(9,paleta)) +
       scale_x_date(date_breaks = "1 month", date_labels = "%b") +
       theme_tufte(base_family="Helvetica")
     
