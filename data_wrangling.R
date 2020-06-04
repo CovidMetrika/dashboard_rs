@@ -1,5 +1,7 @@
 library(tidyverse)
 library(rgeos)
+library(httr)
+library(jsonlite)
 library(readxl)
 library(sf)
 library(jsonlite)
@@ -44,12 +46,15 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
 
 # lendo dados da SES-RS
 
-dados_brasil_io <- read_csv("dados/covid/brasil.io_reserva.csv")
-
 dados_ses <- NULL
-dados_ses <- read_csv2("http://ti.saude.rs.gov.br/covid19/download", locale = readr::locale(encoding = "latin1"))
+dados_ses <- try(read_csv2("http://ti.saude.rs.gov.br/covid19/download", locale = readr::locale(encoding = "latin1")))
 
-if(is.null(dados_ses)) {
+cont <- 1 
+path <- paste0(
+  "http://ti.saude.rs.gov.br/covid19/download", cont)
+request <- GET(url = path)
+
+if(request$status_code == 404) {
   dados_ses <- read_csv("dados/covid/ses_reserva.csv")
 } else {
   write_csv(dados_ses,"dados/covid/ses_reserva.csv")
