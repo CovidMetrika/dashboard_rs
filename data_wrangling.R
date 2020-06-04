@@ -7,7 +7,7 @@ library(abjutils)
 
 # esse script serve para organizar todos objetos de banco de dados que utilizarei no aplicativo
 # são 3 principais:
-# - o de casos do rs obtido através do brasil_io
+# - o de casos do rs obtido através da ses agora
 # - dois shapefiles do rs(municipio e mesoregião) com dados sobre os casos de corona(confirmaodos, incidencia, mortes, etc)
 # - um arquivo com latitudes e longitudes das cidades/hospitais e seus leitos
 # - dois shapefiles do rs(municipio e mesoregião) com dados sobre os leitos
@@ -41,18 +41,20 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
   left_join(codigos_cidades, by = "municipio") %>%  # atribuindo o código
   select(-municipio)
 
-# lendo dados brasil.io
+# lendo dados da SES-RS
 
-dados_brasil_io <- NULL
-dados_brasil_io <- read_csv("https://brasil.io/dataset/covid19/caso?format=csv")
+dados_brasil_io <- read_csv("dados/covid/brasil.io_reserva.csv")
 
-if(is.null(dados_brasil_io)) {
-  dados_brasil_io <- read_csv("dados/covid/brasil.io_reserva.csv")
+dados_ses <- NULL
+dados_ses <- read_csv2("http://ti.saude.rs.gov.br/covid19/download", locale = readr::locale(encoding = "latin1"))
+
+if(is.null(dados_ses)) {
+  dados_ses <- read_csv("dados/covid/ses_reserva.csv")
 } else {
-  write_csv(dados_brasil_io,"dados/covid/brasil.io_reserva.csv")
+  write_csv(dados_ses,"dados/covid/ses_reserva.csv")
 }
 
-dados_covid_rs <- dados_brasil_io %>%
+dados_covid_rs <- dados_ses %>%
   mutate(date = as.Date(date)) %>%
   filter(state == "RS") %>%
   mutate(municipio = str_to_title(city)) %>%
