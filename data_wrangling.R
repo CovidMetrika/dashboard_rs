@@ -44,9 +44,14 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
 # lendo dados brasil.io
 
 dados_brasil_io <- NULL
-dados_brasil_io <- read_csv("https://brasil.io/dataset/covid19/caso?format=csv")
+dados_brasil_io <- try(read_csv("https://brasil.io/dataset/covid19/caso?format=csv"))
 
-if(is.null(dados_brasil_io)) {
+cont <- 1 
+path <- paste0(
+  "https://brasil.io/dataset/covid19/caso?format=csv", cont)
+request <- GET(url = path)
+
+if(request$status_code == 404) {
   dados_brasil_io <- read_csv("dados/covid/brasil.io_reserva.csv")
 } else {
   write_csv(dados_brasil_io,"dados/covid/brasil.io_reserva.csv")
