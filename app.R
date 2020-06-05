@@ -33,6 +33,15 @@ source("data_wrangling.R", encoding = "UTF-8")
 
 # Criando variáveis globais
 
+opcoes <- list(
+  "confirmados" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Confirmados"),
+  "incidencia" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Incidência"),
+  "obitos" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Óbitos"),
+  "mortalidade" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Mortalidade"),
+  "recuperados" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Recuperados"),
+  "acompanhamento" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Em acompanhamento")
+)
+
 ####
 # Funções criadas
 ####
@@ -97,9 +106,11 @@ body <- dashboardBody(
               ),
               bsModal("modal_incidencia", "Incidência", "box_inci", size = "small", "Número de casos confirmados de COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
               bsModal("modal_mortalidade", "Mortalidade", "box_mort", size = "small", "Número de óbitos confirmados por COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
+              setShadow(id = "box_inci", class = "small-box"),
+              setShadow(id = "box_mort", class = "small-box"),
               fluidRow(
                 column(
-                  width = 4,
+                  width = 3,
                   h3("Selecione a variável de interesse"),
                   radioButtons("var_covid",
                                label = NULL,
@@ -109,7 +120,7 @@ body <- dashboardBody(
                                inline = T)
                 ),
                 column(
-                  width = 4,
+                  width = 3,
                   h3("Selecione o tipo de agrupamento"),
                   radioButtons("agrup_covid",
                                label = NULL,
@@ -118,13 +129,14 @@ body <- dashboardBody(
                                inline = T),
                 ),
                 column(
-                  width = 4,
-                  h3("Selecione as regiões de interesse"),
-                  checkboxGroupInput("filtro_covid",
-                                     label = NULL,
-                                     choices = levels(as.factor(dados_covid_rs$regiao_covid)),
-                                     selected = levels(as.factor(dados_covid_rs$regiao_covid)),
-                                     inline = T),
+                  width = 6,
+                  h3("Digite as regiões de interesse"),
+                  selectizeInput("filtro_covid",
+                                 label = NULL,
+                                 choices = levels(as.factor(dados_covid_rs$regiao_covid)),
+                                 selected = levels(as.factor(dados_covid_rs$regiao_covid)),
+                                 multiple = T,
+                                 width = "100%"),
                 )
               ),
               fluidRow(
@@ -195,7 +207,7 @@ body <- dashboardBody(
                 column(
                   width = 4,
                   h3("Selecione o tipo de agrupamento"),
-                  radioButtons("var_leitos_2",
+                  radioButtons("agrup_leitos",
                                label = NULL,
                                choices = list("Hospital" = "hospital", "Municípios" = "municipio", "Mesoregiões" = "mesorregiao"),
                                selected = "municipio",
@@ -234,9 +246,9 @@ body <- dashboardBody(
                 
                 tags$script(src = "https://kit.fontawesome.com/ab15947b75.js", crossorigin="anonymous"), 
                 
-                setZoom(id = "dados_covid",class = "small-box"), # dando um zoomzin quando passa o mouse nos links com base de dados
-                setZoom(id = "dados_leitos",class = "small-box"),
-                setZoom(id = "licenca",class = "small-box"),
+                setShadow(id = "dados_covid",class = "small-box"), # dando um zoomzin quando passa o mouse nos links com base de dados
+                setShadow(id = "dados_leitos",class = "small-box"),
+                setShadow(id = "licenca",class = "small-box"),
                 
                 column(
                   width = 12,
@@ -465,109 +477,52 @@ server <- function(input, output) {
     
     var <- rlang::sym(input$var_covid)
     
-    if(input$var_covid_2=="municipio") {
+    if(input$agrup_covid=="municipio") {
       aux_mapa <- dados_mapa_rs %>%
         mutate(var = replace_na(!!var, 0)) %>%
-        filter(mesorregiao %in% input$filtro_covid)
+        filter(regiao_covid %in% input$filtro_covid)
     } else {
-      aux_mapa <- dados_mapa_rs_meso %>%
+      aux_mapa <- dados_mapa_rs_reg %>%
         mutate(var = replace_na(!!var, 0)) %>%
-        filter(mesorregiao %in% input$filtro_covid)
+        filter(regiao_covid %in% input$filtro_covid)
     }
       
     y_quantidade <- aux_mapa$var
     
-    variavel <- as.data.frame(aux_mapa)[,input$var_covid_2]
+    variavel <- as.data.frame(aux_mapa)[,input$agrup_covid]
     
-    if(input$var_covid == "confirmed") {
-      paleta <- "Reds"
-      texto <- "Casos confirmados"
-    } else if(input$var_covid == "deaths") {
-      paleta <- "Greys"
-      texto <- "Óbitos confirmados"
-    } else if(input$var_covid == "confirmed_per_100k_inhabitants") {
-      paleta <- "Oranges"
-      texto <- "Casos por 100mil habitantes"
-    } else {
-      paleta <- "Purples"
-      texto <- "Letalidade"
-    }
+    # criando intervalo com uma função muito boa
     
-    if(input$var_covid != "death_rate") {
-      
-      # criando intervalo com uma função muito boa
-      
-      intervalos <- classInt::classIntervals(var = y_quantidade, n = 6, style = "fisher")
-      
-      intervalos[["brks"]][1:2] <- c(0,1)
-      
-      
-      pal <- colorBin(palette=paleta, domain = y_quantidade, bins = intervalos[["brks"]])
-      
-      leaflet(aux_mapa) %>%
-        addTiles(urlTemplate = "http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", attribution = 'Google') %>%
-        addPolygons(fillColor = ~pal(y_quantidade), 
-                    weight = 1.5,
-                    opacity = 0.7,
+    intervalos <- classInt::classIntervals(var = y_quantidade, n = 7, style = "fisher")
+    
+    intervalos[["brks"]][1:2] <- c(0,1)
+    
+    pal <- colorBin(palette=opcoes[[input$var_covid]][["paleta"]], domain = y_quantidade, bins = intervalos[["brks"]])
+    
+    leaflet(aux_mapa) %>%
+      addTiles(urlTemplate = "http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", attribution = 'Google') %>%
+      addPolygons(fillColor = ~pal(y_quantidade), 
+                  weight = 1.5,
+                  opacity = 0.7,
+                  fillOpacity = 0.7,
+                  color = "gray",
+                  highlight = highlightOptions(
+                    weight = 5,
+                    color = "#666",
                     fillOpacity = 0.7,
-                    color = "gray",
-                    highlight = highlightOptions(
-                      weight = 5,
-                      color = "#666",
-                      fillOpacity = 0.7,
-                      bringToFront = TRUE),
-                    label = sprintf("%s - %s", variavel, y_quantidade),
-                    labelOptions = labelOptions(
-                      style = list("font-weight" = "normal", padding = "6px 11px"),
-                      textsize = "15px",
-                      direction = "auto"))   %>%
-        addLegend(pal = pal, values = round(y_quantidade,0), labFormat = function(type, cuts, p) {  # legenda para colorQuantile
-          n = length(cuts)
-          paste0(round(cuts[-n],0), " &ndash; ", round(cuts[-1],0))},
-          title = texto,
-          labels = ~variavel,
-          position = "bottomright")
+                    bringToFront = TRUE),
+                  label = sprintf("%s - %s", variavel, y_quantidade),
+                  labelOptions = labelOptions(
+                    style = list("font-weight" = "normal", padding = "6px 11px"),
+                    textsize = "15px",
+                    direction = "auto"))   %>%
+      addLegend(pal = pal, values = round(y_quantidade,0), labFormat = function(type, cuts, p) {  # legenda para colorQuantile
+        n = length(cuts)
+        paste0(round(cuts[-n],0), " &ndash; ", round(cuts[-1],0))},
+        title = opcoes[[input$var_covid]][["texto"]],
+        labels = ~variavel,
+        position = "bottomright")
       
-    } else {
-      
-      # criando intervalo com uma função muito boa
-      
-      intervalos <- classInt::classIntervals(var = y_quantidade, n = 6, style = "fisher")
-      
-      if (input$var_covid_2 == "municipio") {
-        intervalos[["brks"]][1:6] <- c(0,0.001,0.03,0.05,0.1,0.5,1)
-      }
-      
-      pal <- colorBin(palette=paleta, domain = y_quantidade, bins = intervalos[["brks"]])
-      
-      leaflet(aux_mapa) %>%
-        addTiles(urlTemplate = "http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", attribution = 'Google') %>%
-        addPolygons(fillColor = ~pal(y_quantidade), 
-                    weight = 1.5,
-                    opacity = 0.7,
-                    fillOpacity = 0.7,
-                    color = "gray",
-                    highlight = highlightOptions(
-                      weight = 5,
-                      color = "#666",
-                      fillOpacity = 0.7,
-                      bringToFront = TRUE),
-                    label = sprintf("%s - %s", variavel, paste0(100*round(y_quantidade,4),"%")),
-                    labelOptions = labelOptions(
-                      style = list("font-weight" = "normal", padding = "6px 11px"),
-                      textsize = "15px",
-                      direction = "auto"))   %>%
-        addLegend(pal = pal, values = round(y_quantidade,0), labFormat = function(type, cuts, p) {  # legenda para colorQuantile
-          n = length(cuts)
-          paste0(100*round(cuts[-n],4),"%", " &ndash; ", 100*round(cuts[-1],4),"%")},
-          title = texto,
-          labels = ~variavel,
-          position = "bottomright")
-      
-    }
-    
-    
-    
   })
   
   #############
@@ -576,64 +531,32 @@ server <- function(input, output) {
   output$grafico_covid <- renderPlotly({
     
     var <- rlang::sym(input$var_covid)
-    var2 <- rlang::sym(input$var_covid_2)
+    var2 <- rlang::sym(input$agrup_covid)
+    pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
+    text_tooltip <- names(opcoes)[names(opcoes)!=input$var_covid]
+    outra_var <- sym(text_tooltip[1])
+    outra_var2 <- sym(text_tooltip[2])
+    outra_var3 <- sym(text_tooltip[3])
+    outra_var4 <- sym(text_tooltip[4])
+    outra_var5 <- sym(text_tooltip[5])
     
-    if(input$var_covid == "confirmed") {
-      cor <- "#dd4b39"
-      texto <- "Casos confirmados"
-    } else if(input$var_covid == "confirmed_per_100k_inhabitants") {
-      cor <- "#ff851b"
-      texto <- "Confirmados por 100k habitantes"
-    } else if(input$var_covid == "deaths"){
-      cor <- "#757474"
-      texto <- "Óbitos"
-    } else {
-      cor <- "#605ca8"
-      texto <- "Letalidade"
-    }
-    
-    pop_rs <- dados_covid_rs %>%
-      filter(place_type == "state")
-    
-    aux <- dados_covid_rs %>%
-      filter(place_type == "city") %>%
-      filter(mesorregiao %in% input$filtro_covid) %>%
-      filter(is_last) %>%
+    p <- dados_covid_rs %>%
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
+             acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
+             recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
       group_by(!!var2) %>%
-      summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
-                death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019))  %>%
-      arrange(desc(!!var))
-      
-    if(input$var_covid == "death_rate") {
-      aux <- as.data.frame(aux)
-      
-      aux <- aux[1:25,]
-      
-      ordem <- aux[,input$var_covid_2]
-      
-      aux <- aux %>%
-        filter(!is.na(!!var))
-     
-    } else {
-      aux <- as.data.frame(aux)
-      
-      aux <- aux[1:25,]
-      
-      ordem <- aux[,input$var_covid_2]
-    }
-    
-    p <- ggplot(aux, aes(x = !!var2, y = !!var)) +
-      geom_col(fill = cor) +
-      labs(x = input$var_covid_2, y = texto) +
-      scale_x_discrete(limits = rev(ordem)) +
+      summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(!!pop_var)),obitos = sum(obitos, na.rm = T), 
+                mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), acompanhamento = sum(acompanhamento, na.rm = T), 
+                recuperados = sum(recuperados, na.rm = T), populacao = first(!!pop_var)) %>%
+      arrange(desc(!!var)) %>%
+      slice_head(n = 25) %>%
+      ggplot(aes(x = reorder(!!var2, !!var), y = !!var, text = paste(!!var2,paste0(input$var_covid," ",round(!!var,0)),paste0(text_tooltip[1]," ",round(!!outra_var,0)),paste0(text_tooltip[2]," ",round(!!outra_var2,0)),paste0(text_tooltip[3]," ",round(!!outra_var3,0)),paste0(text_tooltip[4]," ",round(!!outra_var4,0)),paste0(text_tooltip[5]," ",round(!!outra_var5,0)),paste0("populacao ",!!sym("populacao")),sep = "\n"))) +
+      geom_col(fill = opcoes[[input$var_covid]][["cor"]]) +
+      labs(x = input$agrup_covid, y = opcoes[[input$var_covid]][["texto"]]) +
       coord_flip()
-    
-    if(input$var_covid == "death_rate") {
-      p <- p +
-        scale_y_continuous(labels=percent)
-    }
-    
-    ggplotly(p)
+  
+    ggplotly(p, tooltip = c("text"))
     
   })
   
@@ -658,7 +581,7 @@ server <- function(input, output) {
       texto <- "Letalidade"
     }
     
-    if(input$var_covid_2 == "municipio") {
+    if(input$agrup_covid == "municipio") {
       
       aux <- dados_covid_rs %>%
         filter(place_type == "city") %>%
@@ -740,16 +663,16 @@ server <- function(input, output) {
   output$ui_serie_covid <- renderUI({
     
     var <- rlang::sym(input$var_covid)
-    var2 <- rlang::sym(input$var_covid_2)
+    var2 <- rlang::sym(input$agrup_covid)
     
     aux <- dados_covid_rs %>%
       filter(!is.na(!!var) & !!var != 0) %>%
       filter(mesorregiao %in% input$filtro_covid) %>%
       as.data.frame()
     
-    leveis <- levels(as.factor(aux[,input$var_covid_2]))
+    leveis <- levels(as.factor(aux[,input$agrup_covid]))
     
-    if(input$var_covid_2 == "municipio") {
+    if(input$agrup_covid == "municipio") {
       text2 <- " município ou deixe todos selecionados(default)"
     } else {
       text2 <- "a mesoregião ou deixe todas selecionadas(default)"
@@ -782,7 +705,7 @@ server <- function(input, output) {
   output$serie_covid_dia <- renderPlotly({
 
     var <- rlang::sym(input$var_covid)
-    var2 <- rlang::sym(input$var_covid_2)
+    var2 <- rlang::sym(input$agrup_covid)
     
     pop_rs <- dados_covid_rs %>%
       filter(place_type == "state")
@@ -871,7 +794,7 @@ server <- function(input, output) {
   output$serie_covid_sem <- renderPlotly({
     
     var <- rlang::sym(input$var_covid)
-    var2 <- rlang::sym(input$var_covid_2)
+    var2 <- rlang::sym(input$agrup_covid)
     
     if(input$var_covid == "confirmed") {
       cor <- "#dd4b39"
@@ -960,7 +883,7 @@ server <- function(input, output) {
   output$ui_filtro_quadradinhos <- renderUI({
     
     var <- rlang::sym(input$var_covid)
-    var2 <- rlang::sym(input$var_covid_2)
+    var2 <- rlang::sym(input$agrup_covid)
     
     aux <- dados_covid_rs %>%
       filter(place_type == "city") %>%
@@ -978,8 +901,8 @@ server <- function(input, output) {
       selectInput(
         "filtro_quadradinhos",
         label = "Selecione os municípios de interesse(por default estão os 15 de maior quantidade da variável escolhida)",
-        choices = aux[,input$var_covid_2],
-        selected = aux[1:15,input$var_covid_2],
+        choices = aux[,input$agrup_covid],
+        selected = aux[1:15,input$agrup_covid],
         multiple = T
       ),
       plotlyOutput("plot_quadradinhos", height = 650L)
@@ -990,7 +913,7 @@ server <- function(input, output) {
   output$plot_quadradinhos <- renderPlotly({
     
     var <- rlang::sym(input$var_covid)
-    var2 <- rlang::sym(input$var_covid_2)
+    var2 <- rlang::sym(input$agrup_covid)
     
     if(input$var_covid == "confirmed") {
       paleta <- "Reds"
@@ -1095,7 +1018,7 @@ server <- function(input, output) {
     
     var <- rlang::sym(input$var_leitos)
     
-    if (input$var_leitos_2 == "hospital") {
+    if (input$agrup_leitos == "hospital") {
       if (input$var_leitos != "lotacao") {
         aux_mapa <- leitos_uti %>%
           filter(!is.na(!!var)) %>%
@@ -1113,7 +1036,7 @@ server <- function(input, output) {
           summarise(var = ifelse(sum(leitos_total)!=0,sum(leitos_internacoes)/sum(leitos_total),NA))
       }
       
-    } else if (input$var_leitos_2 == "municipio") {
+    } else if (input$agrup_leitos == "municipio") {
       aux_mapa <- leitos_mapa_mun_rs %>%
         mutate(var = !!var) %>%
         filter(mesorregiao %in% input$filtro_leitos)
@@ -1143,9 +1066,9 @@ server <- function(input, output) {
       texto <- "Leitos ocupados COVID-19"
     }
     
-    if(input$var_leitos_2 != "hospital") {
+    if(input$agrup_leitos != "hospital") {
       
-      variavel <- as.data.frame(aux_mapa)[,input$var_leitos_2]
+      variavel <- as.data.frame(aux_mapa)[,input$agrup_leitos]
       
       if(input$var_leitos != "lotacao") {
         
@@ -1264,7 +1187,7 @@ server <- function(input, output) {
   output$grafico_leitos <- renderPlotly({
     
     var <- rlang::sym(input$var_leitos)
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     if (input$var_leitos == "leitos_total") {
       cor <- "#00a65a"
@@ -1280,14 +1203,14 @@ server <- function(input, output) {
       texto <- "Leitos ocupados COVID-19"
     }
     
-    if (input$var_leitos_2 != "hospital") {
+    if (input$agrup_leitos != "hospital") {
       if(input$var_leitos != "lotacao") {
         aux <- leitos_uti %>%
           filter(mesorregiao %in% input$filtro_leitos) %>%
           group_by(cnes) %>%
           filter(data_atualizacao == max(data_atualizacao)) %>%
           ungroup() %>%
-          select(c(input$var_leitos,input$var_leitos_2))
+          select(c(input$var_leitos,input$agrup_leitos))
         
         aux <- aux %>%
           group_by(!!var2) %>%
@@ -1301,7 +1224,7 @@ server <- function(input, output) {
           group_by(cnes) %>%
           filter(data_atualizacao == max(data_atualizacao)) %>%
           ungroup() %>%
-          select(c(leitos_total,leitos_internacoes,input$var_leitos_2))
+          select(c(leitos_total,leitos_internacoes,input$agrup_leitos))
         
         aux <- aux %>%
           group_by(!!var2) %>%
@@ -1330,11 +1253,11 @@ server <- function(input, output) {
     
     aux <- aux[1:25,]
     
-    ordem <- aux[,input$var_leitos_2]
+    ordem <- aux[,input$agrup_leitos]
       
     p <- ggplot(aux, aes(x = !!var2, y = var)) +
       geom_col(fill = cor) +
-      labs(x = input$var_leitos_2, y = input$var_leitos) +
+      labs(x = input$agrup_leitos, y = input$var_leitos) +
       scale_x_discrete(limits = rev(ordem)) +
       coord_flip()
     
@@ -1353,16 +1276,16 @@ server <- function(input, output) {
   output$table_leitos <- renderDataTable({
     
     var <- rlang::sym(input$var_leitos)
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
-    if (input$var_leitos_2 != "hospital") {
+    if (input$agrup_leitos != "hospital") {
       if(input$var_leitos != "lotacao") {
         aux <- leitos_uti %>%
           filter(mesorregiao %in% input$filtro_leitos) %>%
           group_by(cnes) %>%
           filter(data_atualizacao == max(data_atualizacao)) %>%
           ungroup() %>%
-          select(c(input$var_leitos,input$var_leitos_2))
+          select(c(input$var_leitos,input$agrup_leitos))
         
         aux <- aux %>%
           group_by(!!var2) %>%
@@ -1376,7 +1299,7 @@ server <- function(input, output) {
           group_by(cnes) %>%
           filter(data_atualizacao == max(data_atualizacao)) %>%
           ungroup() %>%
-          select(c(leitos_total,leitos_internacoes,input$var_leitos_2))
+          select(c(leitos_total,leitos_internacoes,input$agrup_leitos))
         
         aux <- aux %>%
           group_by(!!var2) %>%
@@ -1416,16 +1339,16 @@ server <- function(input, output) {
       texto <- "Leitos ocupados COVID-19"
     }
     
-    if(input$var_leitos_2 == "municipio") {
+    if(input$agrup_leitos == "municipio") {
       text2 <- "Município"
-    } else if(input$var_leitos_2 == "mesorregiao") {
+    } else if(input$agrup_leitos == "mesorregiao") {
       text2 <- "Mesoregião"
     } else {
       text2 <- "Hospital"
     }
     
     datatable(
-      aux[,c(input$var_leitos_2,"var")], 
+      aux[,c(input$agrup_leitos,"var")], 
       rownames=F,
       class = "compact",
       colnames = c(text2,texto),
@@ -1436,7 +1359,7 @@ server <- function(input, output) {
         paging = FALSE
       )
     ) %>%
-      formatStyle(input$var_leitos_2,color = "#787878", fontSize = "12px", backgroundColor = "#f0f0f0") %>%
+      formatStyle(input$agrup_leitos,color = "#787878", fontSize = "12px", backgroundColor = "#f0f0f0") %>%
       formatStyle("var", color = cor, fontWeight = "bold",fontSize = "12px", backgroundColor = "#f0f0f0")
     
   })
@@ -1446,18 +1369,18 @@ server <- function(input, output) {
   
   output$ui_serie_leitos <- renderUI({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti %>%
       filter(mesorregiao %in% input$filtro_leitos) %>%
       filter(!is.na(leitos_total) & leitos_total != 0) %>%
       as.data.frame()
     
-    leveis <- levels(as.factor(aux[,input$var_leitos_2]))
+    leveis <- levels(as.factor(aux[,input$agrup_leitos]))
     
-    if(input$var_leitos_2 == "municipio") {
+    if(input$agrup_leitos == "municipio") {
       text2 <- " município ou deixe todos selecionados(default)"
-    } else if(input$var_leitos_2 == "mesorregiao") {
+    } else if(input$agrup_leitos == "mesorregiao") {
       text2 <- "a mesoregião ou deixe todas selecionadas(default)"
     } else {
       text2 <- " hospital ou deixe todos selecionados(default)"
@@ -1468,7 +1391,7 @@ server <- function(input, output) {
       filter(!is.na(leitos_covid) & leitos_covid != 0) %>%
       as.data.frame()
     
-    leveis_covid <- levels(as.factor(aux_covid[,input$var_leitos_2]))
+    leveis_covid <- levels(as.factor(aux_covid[,input$agrup_leitos]))
     
     fluidRow(
       column(
@@ -1552,7 +1475,7 @@ server <- function(input, output) {
   
   output$serie_leitos_ocup_dia <- renderPlotly({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti
     
@@ -1589,7 +1512,7 @@ server <- function(input, output) {
   
   output$serie_leitos_ocup_sem <- renderPlotly({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti
     
@@ -1629,7 +1552,7 @@ server <- function(input, output) {
   
   output$serie_leitos_disp_dia <- renderPlotly({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti
     
@@ -1666,7 +1589,7 @@ server <- function(input, output) {
   
   output$serie_leitos_disp_sem <- renderPlotly({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti
     
@@ -1706,7 +1629,7 @@ server <- function(input, output) {
   
   output$serie_leitos_covid_dia <- renderPlotly({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti
     
@@ -1741,7 +1664,7 @@ server <- function(input, output) {
   
   output$serie_leitos_covid_sem <- renderPlotly({
     
-    var2 <- rlang::sym(input$var_leitos_2)
+    var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti
     

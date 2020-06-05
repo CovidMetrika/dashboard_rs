@@ -111,7 +111,8 @@ dados_covid_join <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(municipio, codigo_ibge) %>%
-  summarise(confirmados = n(), obitos = sum(obitos, na.rm = T), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_municipio)),obitos = sum(obitos, na.rm = T), 
+            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
             populacao_estimada_municipio = first(populacao_estimada_municipio)) %>%
   ungroup() %>%
   select(-c(municipio))
@@ -121,7 +122,8 @@ dados_covid_join_reg <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
-  summarise(confirmados = n(), obitos = sum(obitos, na.rm = T), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),obitos = sum(obitos, na.rm = T), 
+            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
             populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_regiao_covid))) %>%
   ungroup()
 
@@ -131,6 +133,7 @@ dados_covid_join_reg <- dados_covid_rs %>%
 
 dados_mapa_rs <- mapa_rs_shp %>%
   left_join(dados_covid_join, by = c("codigo_ibge")) %>%
+  left_join(regiao_covid_mun, by = "codigo_ibge") %>%
   mutate(codigo_ibge = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
 # shp mesoregiao
