@@ -22,17 +22,16 @@ library(shinyEffects)
 library(lubridate)
 library(ggthemes)
 library(shinyalert)
-
-####
-# Leitura banco de dados
-####
+library(shinyBS)
 
 options(OutDec= ",") # Muda de ponto para virgula nos decimais! 
 
 
-# rodando o script de data_wrangling
+# rodando o script de data_wrangling para obtenção dos dados
 
 source("data_wrangling.R", encoding = "UTF-8")
+
+# Criando variáveis globais
 
 ####
 # Funções criadas
@@ -40,49 +39,7 @@ source("data_wrangling.R", encoding = "UTF-8")
 
 # criando função personalizada para a caixa do usuário 
 
-widgetUserBoxx <- function (..., title = NULL, subtitle = NULL, type = NULL, background = FALSE, 
-                            backgroundUrl = NULL, src = NULL, color = NULL, footer = NULL, 
-                            footer_padding = TRUE, width = 6, height = NULL, boxToolSize = "sm", 
-                            collapsible = TRUE, closable = FALSE) 
-{
-  cl <- "widget-user-header"
-  if (!is.null(color) && background == FALSE) 
-    cl <- paste0(cl, " bg-", color)
-  if (isTRUE(background)) 
-    cl <- paste0(cl, " bg-black")
-  boxCl <- "box box-widget widget-user"
-  if (!is.null(type)) 
-    boxCl <- paste0(boxCl, "-", type)
-  style <- NULL
-  if (!is.null(height)) {
-    style <- paste0("height: ", shiny::validateCssUnit(height))
-  }
-  backgroundStyle <- NULL
-  if (isTRUE(background)) {
-    backgroundStyle <- paste0("background: url('", 
-                              backgroundUrl, "') center center;")
-  }
-  shiny::column(width = width, shiny::tags$div(class = boxCl, 
-                                               style = style, shiny::tags$div(class = cl, style = backgroundStyle, 
-                                                                              shiny::tags$div(class = "pull-right box-tools", 
-                                                                                              if (collapsible) {
-                                                                                                shiny::tags$button(class = paste0("btn", 
-                                                                                                                                  " bg-", color, " btn-", boxToolSize), 
-                                                                                                                   `data-widget` = "collapse", type = "button", 
-                                                                                                                   shiny::tags$i(class = "fa fa-minus"))
-                                                                                              }, if (closable) {
-                                                                                                shiny::tags$button(class = paste0("btn", 
-                                                                                                                                  " bg-", color, " btn-", boxToolSize), 
-                                                                                                                   `data-widget` = "remove", type = "button", 
-                                                                                                                   shiny::tags$i(class = "fa fa-times"))
-                                                                                              }), 
-                                                                              shiny::tags$h3(class = "widget-user-username",
-                                                                                             title), shiny::tags$h5(class = "widget-user-desc",
-                                                                                                                    subtitle)), shiny::tags$div(class = "box-body", 
-                                                                                                                                                ...), shiny::tags$div(class = if (isTRUE(footer_padding)) 
-                                                                                                                                                  "box-footer"
-                                                                                                                                                  else "box-footer no-padding", footer)))
-}
+
 
 #data_hora_atual <- str_c("Última atualização em ",format(with_tz(httr::GET("http://www.google.com/")$date, "America/Sao_Paulo"), "%H:%M %d/%m/%Y"))
 
@@ -98,8 +55,8 @@ header <- dashboardHeader(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
     menuItem("Dados COVID-19 RS", tabName = "mapa_covid_rs"),
+    menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
     menuItem("Fonte de dados", tabName = "fonte"),
     menuItem("CovidMetrika", tabName = "sobre")
   ),
@@ -131,27 +88,32 @@ body <- dashboardBody(
               tags$style(".small-box.bg-lime { background-color: #757474 !important; color: #FFFFFF !important; }"),
               
               fluidRow(
-                valueBoxOutput("box_conf", width = 3),
-                valueBoxOutput("box_inci", width = 3),
-                valueBoxOutput("box_obit", width = 3),
-                valueBoxOutput("box_leta", width = 3)
+                valueBoxOutput("box_conf", width = 2),
+                valueBoxOutput("box_inci", width = 2),
+                valueBoxOutput("box_obit", width = 2),
+                valueBoxOutput("box_mort", width = 2),
+                valueBoxOutput("box_recu", width = 2),
+                valueBoxOutput("box_acom", width = 2)
               ),
+              bsModal("modal_incidencia", "Incidência", "box_inci", size = "small", "Número de casos confirmados de COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
+              bsModal("modal_mortalidade", "Mortalidade", "box_mort", size = "small", "Número de óbitos confirmados por COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
               fluidRow(
                 column(
                   width = 4,
                   h3("Selecione a variável de interesse"),
                   radioButtons("var_covid",
                                label = NULL,
-                               choices = list("Confirmados" = "confirmed","Confirmados por 100mil hab." = "confirmed_per_100k_inhabitants","Óbitos" = "deaths","Letalidade" = "death_rate"),
-                               selected = "confirmed",
+                               choices = list("Confirmados" = "confirmados","Incidência" = "incidencia","Óbitos" = "obitos","Mortalidade" = "mortalidade",
+                                              "Recuperados" = "recuperados", "Em acompanhamento" = "acompanhamento"),
+                               selected = "confirmados",
                                inline = T)
                 ),
                 column(
                   width = 4,
                   h3("Selecione o tipo de agrupamento"),
-                  radioButtons("var_covid_2",
+                  radioButtons("agrup_covid",
                                label = NULL,
-                               choices = list("Municípios" = "municipio", "Mesoregiões" = "mesorregiao"),
+                               choices = list("Municípios" = "municipio", "Regiões COVID" = "regiao_covid"),
                                selected = "municipio",
                                inline = T),
                 ),
@@ -160,8 +122,8 @@ body <- dashboardBody(
                   h3("Selecione as regiões de interesse"),
                   checkboxGroupInput("filtro_covid",
                                      label = NULL,
-                                     choices = levels(as.factor(dados_covid_rs$mesorregiao)),
-                                     selected = levels(as.factor(dados_covid_rs$mesorregiao)),
+                                     choices = levels(as.factor(dados_covid_rs$regiao_covid)),
+                                     selected = levels(as.factor(dados_covid_rs$regiao_covid)),
                                      inline = T),
                 )
               ),
@@ -401,80 +363,100 @@ server <- function(input, output) {
   # caixa de confirmados
   output$box_conf <- renderValueBox({
     aux <- dados_covid_rs %>%
-      filter(is_last) %>%
-      filter(place_type == "city") %>%
-      filter(mesorregiao %in% input$filtro_covid)
+      filter(regiao_covid %in% input$filtro_covid)
     
-    total <- sum(aux$confirmed)
+    total <- nrow(aux)
     
     valueBox(
       total,
-      "Casos confirmados",
-      icon = icon("notes-medical"),
+      "Confirmados",
+      icon = icon("virus"),
       color = "red" 
     )
   })
   # caixa incidência por 100 mil habitantes
   output$box_inci <- renderValueBox({
 
-    if(length(input$filtro_covid) == 7) {
-      
-      pop_rs <- dados_covid_rs %>%
-        filter(is_last) %>%
-        filter(place_type == "state")
-      
-      confirmados_por_100k <- pop_rs$confirmed_per_100k_inhabitants
-    
-    } else {
-      
-      aux <- dados_covid_rs %>%
-        filter(is_last) %>%
-        filter(place_type=="city") %>%
-        filter(mesorregiao %in% input$filtro_covid)
+    aux <- dados_covid_rs %>%
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      group_by(regiao_covid) %>%
+      summarise(confirmados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
         
-      confirmados_por_100k <- sum(aux$confirmed)*100000/sum(aux$estimated_population_2019)
+    incidencia <- sum(aux$confirmados)*100000/sum(aux$populacao_estimada_regiao_covid)
       
-    }
-    
     valueBox(
-      round(confirmados_por_100k,2),
-      "Casos confirmados por 100 mil habitantes",
-      icon = icon("ambulance"),
-      color = "orange" 
+      round(incidencia,2),
+      "Incidência*",
+      icon = icon("virus"),
+      color = "red",
+      href = NULL
     )
   })
   # caixa de óbitos
   output$box_obit <- renderValueBox({
     aux <- dados_covid_rs %>%
-      filter(is_last) %>%
-      filter(place_type == "city") %>%
-      filter(mesorregiao %in% input$filtro_covid)
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      filter(evolucao == "OBITO")
     
-    mortes <- sum(aux$deaths)
+    obitos <- nrow(aux)
     
     valueBox(
-      mortes,
+      obitos,
       "Óbitos",
       icon = icon("heartbeat"),
-      color = "lime", 
+      color = "purple"
     )
   })
-  # caixas de letalidade
-  output$box_leta <- renderValueBox({
+  # caixas de mortalidade
+  output$box_mort <- renderValueBox({
     aux <- dados_covid_rs %>%
-      filter(is_last) %>%
-      filter(place_type == "city") %>%
-      filter(mesorregiao %in% input$filtro_covid) 
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      filter(evolucao == "OBITO") %>%
+      group_by(regiao_covid) %>%
+      summarise(obitos = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    letalidade <- sum(aux$deaths)/sum(aux$confirmed)
+    mortalidade <- sum(aux$obitos)*100000/sum(aux$populacao_estimada_regiao_covid)
+
+    valueBox(
+      round(mortalidade,2),
+      "Mortalidade*",
+      icon = icon("heartbeat"),
+      color = "purple"
+    )
+  })
+  # caixa de recuperados
+  output$box_recu <- renderValueBox({
+    aux <- dados_covid_rs %>%
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      filter(evolucao == "CURA")
+    
+    recuperados <- nrow(aux)
     
     valueBox(
-      paste0(round(letalidade*100,2),"%"),
-      "Letalidade",
-      icon = icon("heartbeat"),
-      color = "purple", 
+      recuperados,
+      "Recuperados",
+      icon = icon("virus-slash"),
+      color = "blue",
+      href = NULL 
     )
   })
+  # caixa de em acompanhamento
+  output$box_acom <- renderValueBox({
+    aux <- dados_covid_rs %>%
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      filter(evolucao == "EM ACOMPANHAMENTO")
+    
+    acompanhamento <- nrow(aux)
+    
+    valueBox(
+      acompanhamento,
+      "Em acompanhamento",
+      icon = icon("clinic-medical"),
+      color = "yellow"
+    )
+  })
+
+  
   
   #####################
   # Mapa_covid

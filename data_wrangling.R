@@ -36,7 +36,10 @@ codigos_cidades <- tibble(municipio = mapa_rs_shp$municipio, codigo_ibge = mapa_
 codigos_cidades_sem_acento <- codigos_cidades %>%
   mutate(municipio = rm_accent(municipio))
 
-# lendo mesoregiões
+# lendo mesoregiões e região covid
+
+regiao_covid_mun <- read_csv("dados/shapefiles/regioes_covid/banco_mun_regiao_covid.csv") %>%
+  mutate(codigo_ibge = as.character(codigo_ibge))
 
 rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregiao.csv") %>%
   mutate(municipio = str_to_title(municipio),
@@ -49,9 +52,8 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
 dados_ses <- NULL
 dados_ses <- try(read_csv2("http://ti.saude.rs.gov.br/covid19/download", locale = readr::locale(encoding = "latin1")))
 
-cont <- 1 
-path <- paste0(
-  "http://ti.saude.rs.gov.br/covid19/download", cont)
+
+path <- "http://ti.saude.rs.gov.br/covid19/download"
 request <- GET(url = path)
 
 if(request$status_code == 404) {
@@ -67,6 +69,7 @@ names(dados_ses) <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid",
 dados_covid_rs <- dados_ses %>%
   mutate(data_confirmacao = as_date(data_confirmacao, format = "%d/%m/%y"),
          data_sintomas = as_date(data_sintomas, format = "%d/%m/%y"),
+         data_evolucao = as_date(data_evolucao, format = "%d/%m/%y"),
          municipio = str_to_title(municipio))
 
 # arrumando os 3 municipios com inconssistências nos nomes
@@ -87,13 +90,19 @@ dados_covid_rs <- dados_covid_rs %>%
 estimativas_ibge <- read_excel("dados/mesoregiao/estimativas_populacionais_ibge.xls", sheet = "Municípios", skip = 1, n_max = 5570) %>%
   filter(UF == "RS") %>%
   mutate(codigo_ibge = str_c(`COD. UF`,`COD. MUNIC`),
-         populacao_estimada = `POPULAÇÃO ESTIMADA`) %>%
-  select(codigo_ibge, populacao_estimada)
+         populacao_estimada_municipio = `POPULAÇÃO ESTIMADA`) %>%
+  select(codigo_ibge, populacao_estimada_municipio)
 
-pop_rs <- sum(as.numeric(estimativas_ibge$populacao_estimada))
+
+pop_regiao <- estimativas_ibge %>%
+  left_join(regiao_covid_mun, by = "codigo_ibge") %>%
+  group_by(regiao_covid) %>%
+  summarise(populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_municipio)))
 
 dados_covid_rs <- dados_covid_rs %>%
-  left_join(estimativas_ibge, by = c("codigo_ibge"))
+  left_join(estimativas_ibge, by = c("codigo_ibge")) %>%
+  left_join(pop_regiao, by = c("regiao_covid"))
+
 
 # fazendo um banco de join para o mapa do rs
 
@@ -103,7 +112,7 @@ dados_covid_join <- dados_covid_rs %>%
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(municipio, codigo_ibge) %>%
   summarise(confirmados = n(), obitos = sum(obitos, na.rm = T), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
-            populacao_estimada = first(populacao_estimada)) %>%
+            populacao_estimada_municipio = first(populacao_estimada_municipio)) %>%
   ungroup() %>%
   select(-c(municipio))
 
@@ -113,7 +122,7 @@ dados_covid_join_reg <- dados_covid_rs %>%
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
   summarise(confirmados = n(), obitos = sum(obitos, na.rm = T), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
-            populacao_estimada = sum(as.numeric(populacao_estimada))) %>%
+            populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_regiao_covid))) %>%
   ungroup()
 
 # fazendo o join dos dados covid ao shp
@@ -132,9 +141,6 @@ dados_mapa_rs_reg <- mapa_reg_rs %>%
 #################################
 # lendo leitos UTI do site da SES
 #################################
-
-regiao_covid_mun <- read_csv("dados/shapefiles/regioes_covid/banco_mun_regiao_covid.csv") %>%
-  mutate(codigo_ibge = as.character(codigo_ibge))
 
 hospital_municipio <- read_csv("dados/leitos/outros/hospital_municipio.csv") %>%
   mutate(codigo_ibge = as.character(codigo_ibge))
@@ -280,6 +286,9 @@ dados_covid_rs <- dados_covid_rs %>%
   select(-semana_epidemiologica) %>%
   left_join(semana, by = c("data_sintomas" = "dia")) %>%
   mutate(semana_epidemiologica_sintomas = semana_epidemiologica) %>%
+  select(-semana_epidemiologica) %>%
+  left_join(semana, by = c("data_evolucao" = "dia")) %>%
+  mutate(semana_epidemiologica_evolucao = semana_epidemiologica) %>%
   select(-semana_epidemiologica)
 
 leitos_uti <- leitos_uti %>%
@@ -288,7 +297,7 @@ leitos_uti <- leitos_uti %>%
 # deixando só os objetos essenciais
 
 rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","dados_mapa_rs_reg",
-                       "dados_mapa_rs","dados_covid_rs")))
+                       "dados_mapa_rs","dados_covid_rs","pop_regiao")))
 
 
 
