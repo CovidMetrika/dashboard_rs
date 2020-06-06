@@ -11,7 +11,8 @@ library(lubridate)
 # esse script serve para organizar todos objetos de banco de dados que utilizarei no aplicativo
 # são 3 principais:
 # - o de casos do rs obtido através da ses agora
-# - dois shapefiles do rs(municipio e mesoregião) com dados sobre os casos de corona(confirmaodos, incidencia, mortes, etc)
+# - dois shapefiles do rs(municipio e mesoregião) com dados sobre os casos de corona(confirmaodos, 
+# incidencia, mortes, etc)
 # - um arquivo com latitudes e longitudes das cidades/hospitais e seus leitos
 # - dois shapefiles do rs(municipio e mesoregião) com dados sobre os leitos
 
@@ -26,7 +27,8 @@ mapa_rs_shp[mapa_rs_shp$municipio=="Vespasiano Correa","municipio"] <- "Vespasia
 
 # lendo shapefiles regiões covid
 
-mapa_reg_rs <- sf::st_read("dados/shapefiles/regioes_covid/rs_regiao_20_saude_2020.shp", quiet = TRUE) %>%
+mapa_reg_rs <- sf::st_read("dados/shapefiles/regioes_covid/rs_regiao_20_saude_2020.shp", 
+                           quiet = TRUE) %>%
   mutate(codigo_regiao_covid = 1:20)
 
 # criando um objeto para atribuir códigos ibge às cidades
@@ -50,7 +52,8 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
 # lendo dados da SES-RS
 
 dados_ses <- NULL
-dados_ses <- try(read_csv2("http://ti.saude.rs.gov.br/covid19/download", locale = readr::locale(encoding = "latin1")))
+dados_ses <- try(read_csv2("http://ti.saude.rs.gov.br/covid19/download", 
+                           locale = readr::locale(encoding = "latin1")))
 
 
 path <- "http://ti.saude.rs.gov.br/covid19/download"
@@ -62,8 +65,10 @@ if(request$status_code == 404) {
   write_csv(dados_ses,"dados/covid/ses_reserva.csv")
 }
 
-names(dados_ses) <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid","regiao_covid","sexo","faixa_etaria","tipo_teste",
-                      "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao","sintoma_febre","sintoma_tosse",
+names(dados_ses) <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid","regiao_covid",
+                      "sexo","faixa_etaria","tipo_teste",
+                      "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao",
+                      "sintoma_febre","sintoma_tosse",
                       "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades")
 
 dados_covid_rs <- dados_ses %>%
@@ -87,7 +92,8 @@ dados_covid_rs <- dados_covid_rs %>%
 
 # pegando os dados de estimativas populacionais dos municipios
 
-estimativas_ibge <- read_excel("dados/mesoregiao/estimativas_populacionais_ibge.xls", sheet = "Municípios", skip = 1, n_max = 5570) %>%
+estimativas_ibge <- read_excel("dados/mesoregiao/estimativas_populacionais_ibge.xls", 
+                               sheet = "Municípios", skip = 1, n_max = 5570) %>%
   filter(UF == "RS") %>%
   mutate(codigo_ibge = str_c(`COD. UF`,`COD. MUNIC`),
          populacao_estimada_municipio = `POPULAÇÃO ESTIMADA`) %>%
@@ -111,8 +117,10 @@ dados_covid_join <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(municipio, codigo_ibge) %>%
-  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_municipio)),obitos = sum(obitos, na.rm = T), 
-            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_municipio)),
+            obitos = sum(obitos, na.rm = T), 
+            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
+            acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
             populacao_estimada_municipio = first(populacao_estimada_municipio)) %>%
   ungroup() %>%
   select(-c(municipio))
@@ -122,7 +130,8 @@ dados_covid_join_reg <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
-  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),obitos = sum(obitos, na.rm = T), 
+  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),
+            obitos = sum(obitos, na.rm = T), 
             mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
             populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_regiao_covid))) %>%
   ungroup()
@@ -303,6 +312,12 @@ rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","d
                        "dados_mapa_rs","dados_covid_rs","pop_regiao")))
 
 
+#------------------------------------------------ 
 
+# erros observados no banco de dados: 
+
+# variavél sexo possui um escrito 'femininio'
+
+dados_covid_rs$sexo <- ifelse(dados_covid_rs$sexo == 'Femininio', 'Feminino', dados_covid_rs$sexo)
 
 
