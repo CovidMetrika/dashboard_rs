@@ -158,11 +158,11 @@ body <- dashboardBody(
               ),
               fluidRow(
                 column(
-                  width = 9,
+                  width = 12,
                   uiOutput("ui_serie_covid")
                 ),
                 column(
-                  width = 3,
+                  width = 6,
                   box(
                     dataTableOutput("table_covid", height = "480px"),
                     width = 12
@@ -565,96 +565,39 @@ server <- function(input, output) {
   
   output$table_covid <- renderDataTable({
     
-    var <- rlang::sym(input$var_covid)
+    var2 <- rlang::sym(input$agrup_covid)
+    pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
     
-    if(input$var_covid == "confirmed") {
-      cor <- "#dd4b39"
-      texto <- "Casos confirmados"
-    } else if(input$var_covid == "confirmed_per_100k_inhabitants") {
-      cor <- "#ff851b"
-      texto <- "Confirmados por 100k habitantes"
-    } else if(input$var_covid == "deaths"){
-      cor <- "#757474"
-      texto <- "Óbitos"
-    } else {
-      cor <- "#605ca8"
-      texto <- "Letalidade"
-    }
-    
-    if(input$agrup_covid == "municipio") {
-      
-      aux <- dados_covid_rs %>%
-        filter(place_type == "city") %>%
-        filter(mesorregiao %in% input$filtro_covid) %>%
-        filter(is_last) %>%
-        arrange(desc(!!var))
-      
-      if(input$var_covid == "death_rate") {
-        aux <- aux %>%
-          filter(mesorregiao %in% input$filtro_covid) %>%
-          filter(!is.na(!!var))
-        aux$death_rate <- paste0(100*round(aux$death_rate,4),"%")
-      }
-  
-      tabela <- datatable(
-        aux[,c("municipio",input$var_covid)], 
-        rownames=F,
+    dados_covid_rs %>%
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
+             acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
+             recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+      group_by(!!var2) %>%
+      summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(!!pop_var)),obitos = sum(obitos, na.rm = T), 
+                mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), acompanhamento = sum(acompanhamento, na.rm = T), 
+                recuperados = sum(recuperados, na.rm = T), populacao = first(!!pop_var)) %>%
+      arrange(desc(confirmados)) %>%
+      datatable(
+        rownames = F,
         class = "compact",
-        colnames = c("Município",texto),
         options = list(
           dom = "tfS", 
-          ordering = F,
+          ordering = T,
           scrollY = "460px",
           paging = FALSE
         )
       ) %>%
-        formatStyle("municipio",color = "#222d32", fontSize = "12px", backgroundColor = "#f0f0f0") %>%
-        formatStyle(input$var_covid, color = cor, fontWeight = "bold",fontSize = "12px", backgroundColor = "#f0f0f0")
+      formatStyle(input$agrup_covid, fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("confirmados", color = opcoes[["confirmados"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("incidencia", color = opcoes[["incidencia"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("obitos", color = opcoes[["obitos"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("mortalidade", color = opcoes[["mortalidade"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("recuperados", color = opcoes[["recuperados"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("acompanhamento", color = opcoes[["acompanhamento"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("populacao", fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatRound(c("incidencia","mortalidade"), digits = 2)
       
-      if(input$var_covid == "confirmed_per_100k_inhabitants") {
-        tabela <- formatRound(tabela, input$var_covid, digits = 2)
-      }
-      
-      tabela
-    
-    } else {
-      
-      aux <- dados_covid_rs %>%
-        filter(place_type == "city") %>%
-        filter(mesorregiao %in% input$filtro_covid) %>%
-        filter(is_last) %>%
-        group_by(mesorregiao) %>%
-        summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
-                  death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019)) %>%
-        arrange(desc(!!var))
-      
-      if(input$var_covid == "death_rate") {
-        aux$death_rate <- paste0(100*round(aux$death_rate,4),"%")
-      }
-      
-      tabela <- datatable(
-        aux[,c("mesorregiao",input$var_covid)], 
-        rownames=F,
-        class = "compact",
-        colnames = c("Mesoregião",texto),
-        options = list(
-          dom = "tS", 
-          ordering = F,
-          scrollY = "560px",
-          paging = FALSE
-        )
-      ) %>%
-        formatStyle("mesorregiao",color = "#222d32", fontSize = "12px", backgroundColor = "#f0f0f0") %>%
-        formatStyle(input$var_covid, color = cor, fontWeight = "bold",fontSize = "12px", backgroundColor = "#f0f0f0")
-      
-      if(input$var_covid == "confirmed_per_100k_inhabitants") {
-        tabela <- formatRound(tabela, input$var_covid, digits = 2)
-      }
-      
-      tabela  
-      
-    }
-    
   })
   
   #############
@@ -666,7 +609,6 @@ server <- function(input, output) {
     var2 <- rlang::sym(input$agrup_covid)
     
     aux <- dados_covid_rs %>%
-      filter(!is.na(!!var) & !!var != 0) %>%
       filter(mesorregiao %in% input$filtro_covid) %>%
       as.data.frame()
     
@@ -678,114 +620,130 @@ server <- function(input, output) {
       text2 <- "a mesoregião ou deixe todas selecionadas(default)"
     }
     
-    tabBox(id = "tab_covid",
-           width = 12,
-           title = NULL,
-           tabPanel("Diário",
-                    plotlyOutput("serie_covid_dia", height = 450)
-           ),
-           tabPanel("Semana Epidemiológica",
-                    plotlyOutput("serie_covid_sem", height = 450)
-           ),
-           tabPanel("Filtro",
-                    selectInput(
-                      "filtro_serie_covid",
-                      label = paste0("Selecione algum",text2),
-                      choices = c("Todos selecionados",leveis),
-                      selected = "Todos selecionados",
-                      multiple = F
-                    )
-          )
-    )
+    if(input$var_covid %in% c("acompanhamento","recuperados")) {
+      "Desculpe mas não temos a informação de data para as variáveis de número de casos em acompanhamneto e recuperados"
+    } else {
+      tabBox(id = "tab_covid",
+             width = 12,
+             title = NULL,
+             tabPanel("Diário",
+                      plotlyOutput("serie_covid_dia", height = 450)
+             ),
+             tabPanel("Semana Epidemiológica",
+                      plotlyOutput("serie_covid_sem", height = 450)
+             ),
+             tabPanel("Filtro",
+                      selectInput(
+                        "filtro_serie_covid",
+                        label = paste0("Selecione algum",text2),
+                        choices = c("Todos selecionados",leveis),
+                        selected = "Todos selecionados",
+                        multiple = F
+                      )
+             )
+      )
+    }
+    
   })
   
   ############
   # serie_covid_dia
   
   output$serie_covid_dia <- renderPlotly({
+    
+    #input <- list(var_covid = "obitos", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid = "São Leopoldo")
 
     var <- rlang::sym(input$var_covid)
     var2 <- rlang::sym(input$agrup_covid)
-    
-    pop_rs <- dados_covid_rs %>%
-      filter(place_type == "state")
-    
-    aux <- dados_covid_rs %>%
-      filter(place_type == "city") 
+    pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
     
     if(input$filtro_serie_covid != "Todos selecionados") {
-      aux <- aux %>%
-        filter(!!var2 %in% input$filtro_serie_covid) %>%
-        filter(mesorregiao %in% input$filtro_covid) %>%
-        group_by(date) %>%
-        summarise(confirmed = sum(confirmed), deaths = sum(deaths), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019),
-                  death_rate = sum(deaths)/sum(confirmed)) %>%
-        arrange(date)
+        pop <- dados_covid_rs %>%
+          filter(!!var2 == input$filtro_serie_covid) %>%
+          slice_head(n = 1) %>%
+          select(!!pop_var) %>%
+          as.numeric()
+        
+        aux <- dados_covid_rs %>%
+          filter(!!var2 == input$filtro_serie_covid)
     } else {
-      aux <- aux %>%
-        filter(mesorregiao %in% input$filtro_covid) %>%
-        group_by(date) %>%
-        summarise(confirmed = sum(confirmed), deaths = sum(deaths), confirmed_per_100k_inhabitants = sum(confirmed)*100000/pop_rs$estimated_population_2019[1],
-                  death_rate = sum(deaths)/sum(confirmed)) %>%
-        arrange(date)
+      pop <- pop_regiao %>%
+        filter(regiao_covid %in% input$filtro_covid)
+      
+      pop <- sum(pop$populacao_estimada_regiao_covid)
+      
+      aux <- dados_covid_rs
     }
     
-    
-    if(input$var_covid == "confirmed") {
-      cor <- "#dd4b39"
-      texto <- "Casos confirmados"
-    } else if(input$var_covid == "confirmed_per_100k_inhabitants") {
-      cor <- "#ff851b"
-      texto <- "Confirmados por 100k habitantes"
-    } else if(input$var_covid == "deaths") {
-      cor <- "#757474"
-      texto <- "Óbitos"
+    if(input$var_covid %in% c("confirmados","incidencia")) {
+      aux <- aux %>%
+        filter(regiao_covid %in% input$filtro_covid) %>%
+        group_by(data_confirmacao) %>%
+        summarise(confirmados = n(), incidencia = n()*100000/pop) %>%
+        mutate(frequencia = !!var) %>%
+        arrange(data_confirmacao)
+      
+      n_days <- max(aux$data_confirmacao)-min(aux$data_confirmacao)
+      dias <- min(aux$data_confirmacao)+days(0:n_days)
     } else {
-      cor <- "#605ca8"
-      texto <- "Letalidade"
+      aux <- aux %>%
+        filter(regiao_covid %in% input$filtro_covid) %>%
+        mutate(obitos = ifelse(evolucao == "OBITO", 1, 0)) %>% 
+        group_by(data_evolucao) %>%
+        summarise(obitos = sum(obitos, na.rm = T), mortalidade = sum(obitos, na.rm = T)*100000/pop) %>%
+        filter(!is.na(data_evolucao)) %>%
+        mutate(frequencia = !!var) %>%
+        ungroup() %>%
+        mutate(data_confirmacao = data_evolucao) %>%
+        select(-data_evolucao) %>%
+        arrange(data_confirmacao)
+      
+      n_days <- max(aux$data_confirmacao)-min(aux$data_confirmacao)
+      dias <- min(aux$data_confirmacao)+days(0:n_days)
     }
     
+    aux2 <- tibble(data_confirmacao = dias[!(dias %in% aux$data_confirmacao)],
+                   frequencia = 0)
     
-    ordem <- as.character(format(aux$date, "%d-%m"))
+    aux <- bind_rows(aux,aux2) %>%
+      arrange(data_confirmacao)
     
-    aux$date <- as.character(format(aux$date, "%d-%m"))
+    aux$acumulado <- c(aux$frequencia[1],rep(0,n_days))
     
-    if(input$var_covid %in% c("confirmed","deaths")) {
-      
-      aux <- as.data.frame(aux)
-      
-      aux$novos <- c(aux[1,input$var_covid],rep(NA,nrow(aux)-1))
-      for(i in 2:nrow(aux)) {
-        aux$novos[i] <- aux[i,input$var_covid]-aux[i-1,input$var_covid]
+    for (i in 2:nrow(aux)) {
+      aux$acumulado[i] <- aux$acumulado[i-1]+aux$frequencia[i]
+    }
+    
+    ordem <- as.character(format(aux$data_confirmacao, "%d-%b"))
+    
+    aux$data_confirmacao <- as.character(format(aux$data_confirmacao, "%d-%b"))
+    
+    p <- ggplotly(ggplot(aux) +
+      geom_line(aes(x = data_confirmacao, y = acumulado, group = 1, color = "Acumulado"), linetype = 'dotted') +
+      geom_point(aes(x = data_confirmacao, y = acumulado, color = "Acumulado")) + 
+      geom_col(aes(x = data_confirmacao, y = frequencia, fill = "Frequencia")) +
+      scale_x_discrete(limits = ordem) +
+      scale_color_manual(values = list("Acumulado" = opcoes[[input$var_covid]][["cor"]])) +
+      scale_fill_manual(values = list("Frequencia" = opcoes[[input$var_covid]][["cor"]])) +
+      labs(x = "Dia", y = opcoes[[input$var_covid]][["texto"]], colour = NULL, fill = NULL) +
+      theme(axis.text.x = element_text(angle=90,size=8, vjust = 0.5)) +
+      theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+            panel.grid.major = element_blank(),
+            legend.position=c(0.05, 0.95),
+            legend.key = element_blank())) %>%
+      layout(legend = list(
+        orientation = "v",
+        x = 0.02
+      )
+      )
+    
+    for (i in 1:length(p$x$data)){
+      if (!is.null(p$x$data[[i]]$name)){
+        p$x$data[[i]]$name =  gsub("\\(","",str_split(p$x$data[[i]]$name,",")[[1]][1])
       }
-      
-      p <- ggplot(aux) +
-        geom_line(aes(x = date, y = !!var, group = 1), color = cor, linetype = 'dotted') +
-        geom_point(aes(x = date, y = !!var), color = cor) + 
-        geom_col(data = aux, mapping = aes(x = date, y = novos), fill = cor) +
-        scale_x_discrete(limits = ordem) +
-        labs(x = "Dia", y = texto) +
-        theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5)) +
-        theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-              panel.grid.major = element_blank())
-        
-    } else {
-      
-      p <- ggplot(aux) +
-        geom_line(aes(x = date, y = !!var, group = 1), color = cor, linetype = 'dotted') +
-        geom_point(aes(x = date, y = !!var), color = cor) + 
-        scale_x_discrete(limits = ordem) +
-        labs(x = "Dia", y = texto) +
-        theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5)) +
-        theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
-              panel.grid.major = element_blank())
-      
     }
-        
     
-    
-    ggplotly(p) 
-    
+    p
   })
   
   ############
