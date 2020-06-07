@@ -1059,7 +1059,7 @@ server <- function(input, output) {
         mutate(var = !!var) %>%
         filter(regiao_covid %in% input$filtro_leitos)
     } else {
-      aux_mapa <- leitos_mapa_meso_rs %>%
+      aux_mapa <- leitos_mapa_reg_rs %>%
         filter(regiao_covid %in% input$filtro_leitos) %>%
         mutate(var = !!var)
     }
