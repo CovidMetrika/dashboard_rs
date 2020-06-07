@@ -162,15 +162,15 @@ body <- dashboardBody(
                   uiOutput("ui_serie_covid")
                 ),
                 column(
+                  width = 12,
+                  uiOutput("ui_filtro_quadradinhos")
+                ),
+                column(
                   width = 6,
                   box(
                     dataTableOutput("table_covid", height = "480px"),
                     width = 12
                   )
-                ),
-                column(
-                  width = 12,
-                  uiOutput("ui_filtro_quadradinhos")
                 )
               )
             )
@@ -866,22 +866,29 @@ server <- function(input, output) {
       arrange(desc(!!var))
     
     aux <- as.data.frame(aux)
-
-    box(
-      width = 12,
-      selectInput(
-        "filtro_quadradinhos",
-        label = "Selecione os municípios de interesse(por default estão os 15 de maior quantidade da variável escolhida)",
-        choices = aux[,input$agrup_covid],
-        selected = aux[1:15,input$agrup_covid],
-        multiple = T
-      ),
-      plotlyOutput("plot_quadradinhos", height = 650L)
-    )
+    
+    if(input$var_covid %in% c("acompanhamento","recuperados")) {
+      "Desculpe mas não temos a informação de data para as variáveis de número de casos em acompanhamento e recuperados"
+    } else {
+      box(
+        width = 12,
+        selectInput(
+          "filtro_quadradinhos",
+          label = "Selecione os municípios de interesse(por default estão os 15 de maior quantidade da variável escolhida)",
+          choices = aux[,input$agrup_covid],
+          selected = aux[1:15,input$agrup_covid],
+          multiple = T
+        ),
+        plotlyOutput("plot_quadradinhos", height = 650L)
+      )
+    }
     
   })
   
+  # plot_quadradinhos
   output$plot_quadradinhos <- renderPlotly({
+    
+    #input <- list(var_covid = "obitos", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_quadradinhos = aux[1:15,input$agrup_covid])
     
     var <- rlang::sym(input$var_covid)
     var2 <- rlang::sym(input$agrup_covid)
@@ -909,15 +916,33 @@ server <- function(input, output) {
     }
     data_minima <- aux %>%
       group_by(!!var2) %>%
-      summarise(minimo = min(data_confirmacao))
+      summarise(minimo = min(data_confirmacao)) %>%
+      arrange(minimo) %>%
+      select(minimo) %>%
+      as.list()
     
     n_days <- max(aux$data_confirmacao)-data_minima$minimo
-    dias <- data_minima$minimo+pmap(list(rep(0,length(n_days)),n_days), seq)
+    soma_dias <- pmap(list(rep(0,length(n_days)),n_days), seq)
     
     aux <- as.data.frame(aux)
     
-    aux2 <- tibble(data_confirmacao = dias[!(dias %in% aux$data_confirmacao)],
-                   frequencia = 0)
+    dias <- list()
+    dias_faltantes <- list()
+    for(i in 1:length(n_days)) {
+      dias[[i]] <- data_minima$minimo[[i]]+soma_dias[[i]]
+      dias_faltantes[[i]] <- dias[[i]][!(dias[[i]] %in% aux[aux[,input$agrup_covid]==unique(aux[,input$agrup_covid])[[i]],"data_confirmacao"])]
+    }
+    
+    
+    if(input$agrup_covid=="municipio") {
+      aux2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes)),
+                     municipio = rep(unique(aux[,input$agrup_covid]),unlist(map(dias_faltantes,length))),
+                     frequencia = 0)
+    } else {
+      aux2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes)),
+                     regiao_covid = rep(unique(aux[,input$agrup_covid]),unlist(map(dias_faltantes,length))),
+                     frequencia = 0)
+    }
     
     aux <- bind_rows(aux,aux2) %>%
       arrange(data_confirmacao)
@@ -931,37 +956,15 @@ server <- function(input, output) {
       }
     }
     
-    if(input$var_covid == "confirmed") {
-      paleta <- "Reds"
-      texto <- "Casos confirmados"
-    } else if(input$var_covid == "deaths") {
-      paleta <- "Greys"
-      texto <- "Óbitos confirmados"
-    } else if(input$var_covid == "confirmed_per_100k_inhabitants") {
-      paleta <- "Oranges"
-      texto <- "Casos por 100mil habitantes"
-    } else {
-      paleta <- "Purples"
-      texto <- "Letalidade"
-    }
-
-    aux <- dados_covid_rs %>%
-      filter(place_type == "city") %>%
-      filter(!!var2 %in% input$filtro_quadradinhos) %>%
-      group_by(!!var2,date) %>%
-      summarise(confirmed = sum(confirmed), deaths = sum(deaths), estimated_population_2019 = sum(estimated_population_2019),
-                death_rate = sum(deaths)/sum(confirmed), confirmed_per_100k_inhabitants = sum(confirmed)*100000/sum(estimated_population_2019)) %>%
-      arrange(date)
-    
-    aux <- as.data.frame(aux)
-    
-    p <- ggplot(aux, aes(x = data_confirmacao, y = !!var2, fill = !!var)) +
+    p <- ggplot(aux, aes(x = data_confirmacao, y = reorder(!!var2,frequencia, FUN = sum), fill = acumulado, text = paste(!!var2,paste0(input$var_covid," ",round(acumulado,0)),sep = "\n"))) +
       geom_tile() +
-      scale_fill_gradientn(name = opcoes[[input$var_covid]][["texto"]], colours = brewer.pal(9,opcoes[[input$var_covid]][["paleta"]])) +
+      labs(y = input$agrup_covid) +
+      scale_fill_gradientn(trans = "sqrt",name = opcoes[[input$var_covid]][["texto"]], colours = brewer.pal(9,opcoes[[input$var_covid]][["paleta"]])) +
       scale_x_date(date_breaks = "1 month", date_labels = "%b") +
       theme_tufte(base_family="Helvetica")
     
-    ggplotly(p)
+    ggplotly(p, tooltip = c("text","x"))
+    
   })
   
   ###############################
