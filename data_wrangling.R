@@ -270,7 +270,7 @@ leitos_join_mun <- leitos_uti %>%
 leitos_join_reg <- leitos_uti %>%
   group_by(cnes) %>%
   filter(data_atualizacao == max(data_atualizacao)) %>%
-  group_by(codigo_regiao_covid) %>%
+  group_by(codigo_regiao_covid,regiao_covid) %>%
   summarise(leitos_internacoes = sum(leitos_internacoes), leitos_total = sum(leitos_total), leitos_covid = sum(leitos_covid),
             lotacao = ifelse(sum(leitos_total)==0, NA, sum(leitos_internacoes)/sum(leitos_total)), leitos_disponiveis = leitos_total - leitos_internacoes)
   
@@ -281,6 +281,7 @@ leitos_join_reg <- leitos_uti %>%
 
 leitos_mapa_mun_rs <- mapa_rs_shp %>%
   left_join(leitos_join_mun, by = c("codigo_ibge")) %>%
+  left_join(regiao_covid_mun, by = "codigo_ibge") %>%
   mutate(codigo_ibge = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
 # shp mesoregiao
