@@ -250,12 +250,16 @@ body <- dashboardBody(
                 setShadow(id = "licenca",class = "small-box"),
                 
                 column(
-                  width = 12,
+                  width = 6,
                   valueBoxOutput("dados_covid",width = 12)
                 ),
                 column(
                   width = 6,
                   valueBoxOutput("dados_leitos",width = 12)
+                ),
+                column(
+                  width = 6,
+                  valueBoxOutput("dados_regioes_covid",width = 12)
                 ),
                 column(
                   width = 6,
@@ -1749,6 +1753,19 @@ server <- function(input, output) {
       icon = icon("hospital"),
       color = "aqua",
       href = "http://ti.saude.rs.gov.br/covid19/leitos/dashboard.php",
+      width = 12
+    )
+    
+  })
+  
+  output$dados_leitos <- renderValueBox({
+    
+    valueBox(
+      value = "Dados regiões COVID",
+      subtitle = "Shapefiles gentilmente gentilmente fornecidos pela DEPLAN-SEPLAG",
+      icon = icon("archive"),
+      color = "aqua",
+      href = "https://planejamento.rs.gov.br/estudos-deplan",
       width = 12
     )
     
