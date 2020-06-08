@@ -320,12 +320,6 @@ rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","d
                        "dados_mapa_rs","dados_covid_rs","pop_regiao")))
 
 
-#------------------------------------------------ 
 
-# erros observados no banco de dados: 
-
-# variavél sexo possui um escrito 'femininio'
-
-dados_covid_rs$sexo <- ifelse(dados_covid_rs$sexo == 'Femininio', 'Feminino', dados_covid_rs$sexo)
 
 
