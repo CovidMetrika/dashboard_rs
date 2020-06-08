@@ -1810,7 +1810,7 @@ server <- function(input, output) {
   output$dashboard_poa <- renderValueBox({
     
     valueBox("Dashboard POA", 
-             subtitle = div("Confira aqui o nosso outro painel de dados com foco em Porto Alegre"), 
+             subtitle = div("Confira aqui o nosso outro painel de dados com foco em Porto Alegre, informando os casos de COVID-19 e a situação dos leitos de UTI"), 
              icon = icon("columns"), 
              color = "orange", 
              width = 12,
