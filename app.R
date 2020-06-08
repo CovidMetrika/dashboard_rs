@@ -24,8 +24,7 @@ library(ggthemes)
 library(shinyalert)
 library(shinyBS)
 
-options(OutDec= ",") # Muda de ponto para virgula nos decimais! 
-
+options(OutDec = ",") # Muda de ponto para virgula nos decimais! 
 
 # rodando o script de data_wrangling para obtenção dos dados
 
@@ -195,7 +194,7 @@ body <- dashboardBody(
               ),
               fluidRow(
                 column(
-                  width = 4,
+                  width = 3,
                   h3("Selecione a variável de interesse"),
                   radioButtons("var_leitos",
                                label = NULL,
@@ -213,13 +212,14 @@ body <- dashboardBody(
                                inline = T),
                 ),
                 column(
-                  width = 4,
-                  h3("Selecione as regiões de interesse"),
-                  checkboxGroupInput("filtro_leitos",
-                                     label = NULL,
-                                     choices = levels(as.factor(leitos_uti$regiao_covid)),
-                                     selected = levels(as.factor(leitos_uti$regiao_covid)),
-                                     inline = T),
+                  width = 5,
+                  h3("Digite as regiões de interesse"),
+                  selectizeInput("filtro_covid",
+                                 label = NULL,
+                                 choices = levels(as.factor(leitos_uti$regiao_covid)),
+                                 selected = levels(as.factor(leitos_uti$regiao_covid)),
+                                 multiple = T,
+                                 width = "100%"),
                 ),
                 column(
                   width = 7,
@@ -277,6 +277,14 @@ body <- dashboardBody(
                   width = 6,
                   valueBoxOutput("git_covidMetrika", width = 12)
                 ),
+                column(
+                  width = 6,
+                  valueBoxOutput("dashboard_poa",width = 12)
+                ),
+                column(
+                  width = 6,
+                  valueBoxOutput("dashboard_br", width = 12)
+                ),
               
                 widgetUserBox(
                   title = tags$b("Franciele Lobo Pallaoro"),
@@ -294,7 +302,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'gabriel.jpg',
+                  src = "gabriel.jpg",
                   color = "red",
                   "Contato: gabrielholmersaul@gmail.com",
                   footer_padding = F
@@ -306,7 +314,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'gustavo.png',
+                  src = "gustavo.png",
                   color = "red",
                   "Contato: gustavo.utpott@gmail.com",
                   footer_padding = F
@@ -317,7 +325,7 @@ body <- dashboardBody(
                   subtitle = "Estudante de Pós-Graduação em Epidemiologia da UFRGS",
                   type = 2,
                   width = 4,
-                  src =  'juliana.jpeg',
+                  src =  "juliana.jpeg",
                   color = "red",
                   "Contato: julianass.estatistica@gmail.com",
                   footer_padding = F
@@ -329,7 +337,7 @@ body <- dashboardBody(
                   subtitle = "Professora do Departamento de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'marcia.png',
+                  src = "marcia.png",
                   color = "red",
                   "Contato: mhbarbian@ufrgs.br",
                   footer_padding = F
@@ -340,7 +348,7 @@ body <- dashboardBody(
                   subtitle = "Professor do Departamento de Estatística da UFRGS",
                   type = 2,
                   width = 4,
-                  src = 'rodrigo.jpg',
+                  src = "rodrigo.jpg",
                   color = "red",
                   "Contato: citton.padilha@ufrgs.br",
                   footer_padding = F
@@ -1724,10 +1732,10 @@ server <- function(input, output) {
     
     valueBox(
       value = "COVID-19",
-      subtitle = "Dados extraídos das Secretarias de Saúde dos estados e reunidos no site Brasil.io",
+      subtitle = "Dados extraídos do Painel Coronavírus RS da Secretaria de Saúde do RS",
       icon = icon("viruses"),
       color = "aqua",
-      href = "https://brasil.io/dataset/covid19/caso/",
+      href = "http://ti.saude.rs.gov.br/covid19/",
       width = 12
     )
     
@@ -1778,6 +1786,30 @@ server <- function(input, output) {
              color = "orange", 
              width = 12,
              href = "https://github.com/CovidMetrika/dashboard_rs"
+    )
+    
+  })
+  
+  output$dashboard_poa <- renderValueBox({
+    
+    valueBox("Dashboard POA", 
+             subtitle = div("Confira aqui o nosso outro painel de dados com foco em Porto Alegre"), 
+             icon = icon("columns"), 
+             color = "orange", 
+             width = 12,
+             href = "https://mhbarbian.shinyapps.io/covid19_poa/"
+    )
+    
+  })
+  
+  output$dashboard_br <- renderValueBox({
+    
+    valueBox("Dashboard Brasil", 
+             subtitle = div("Confira aqui o nosso outro painel de dados com foco no Brasil e seus estados"), 
+             icon = icon("columns"), 
+             color = "orange", 
+             width = 12,
+             href = "https://mhbarbian.shinyapps.io/CovidMetrika/"
     )
     
   })
