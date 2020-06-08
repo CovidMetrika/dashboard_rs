@@ -178,7 +178,9 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_23_05.csv","leitos_dados_ses_24_05.csv","leitos_dados_ses_25_05.csv",
                          "leitos_dados_ses_26_05.csv","leitos_dados_ses_27_05.csv","leitos_dados_ses_28_05.csv",
                          "leitos_dados_ses_29_05.csv","leitos_dados_ses_30_05.csv","leitos_dados_ses_31_05.csv",
-                         "leitos_dados_ses_01_06.csv","leitos_dados_ses_02_06.csv","leitos_dados_ses_03_06.csv")
+                         "leitos_dados_ses_01_06.csv","leitos_dados_ses_02_06.csv","leitos_dados_ses_03_06.csv",
+                         "leitos_dados_ses_04_06.csv","leitos_dados_ses_05_06.csv","leitos_dados_ses_06_06.csv",
+                         "leitos_dados_ses_07_06.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
@@ -270,7 +272,7 @@ leitos_join_mun <- leitos_uti %>%
 leitos_join_reg <- leitos_uti %>%
   group_by(cnes) %>%
   filter(data_atualizacao == max(data_atualizacao)) %>%
-  group_by(codigo_regiao_covid) %>%
+  group_by(codigo_regiao_covid,regiao_covid) %>%
   summarise(leitos_internacoes = sum(leitos_internacoes), leitos_total = sum(leitos_total), leitos_covid = sum(leitos_covid),
             lotacao = ifelse(sum(leitos_total)==0, NA, sum(leitos_internacoes)/sum(leitos_total)), leitos_disponiveis = leitos_total - leitos_internacoes)
   
@@ -281,6 +283,7 @@ leitos_join_reg <- leitos_uti %>%
 
 leitos_mapa_mun_rs <- mapa_rs_shp %>%
   left_join(leitos_join_mun, by = c("codigo_ibge")) %>%
+  left_join(regiao_covid_mun, by = "codigo_ibge") %>%
   mutate(codigo_ibge = factor("CD_GEOCMU", levels = levels(mapa_rs_shp$CD_GEOCMU)))
 
 # shp mesoregiao
@@ -312,12 +315,6 @@ rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","d
                        "dados_mapa_rs","dados_covid_rs","pop_regiao")))
 
 
-#------------------------------------------------ 
 
-# erros observados no banco de dados: 
-
-# variavél sexo possui um escrito 'femininio'
-
-dados_covid_rs$sexo <- ifelse(dados_covid_rs$sexo == 'Femininio', 'Feminino', dados_covid_rs$sexo)
 
 
