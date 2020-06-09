@@ -1977,7 +1977,7 @@ server <- function(input, output) {
     
   })
   
-  output$dados_leitos <- renderValueBox({
+  output$dados_regioes_covid <- renderValueBox({
     
     valueBox(
       value = "Dados regiões COVID",
