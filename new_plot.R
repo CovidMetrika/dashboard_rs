@@ -82,18 +82,9 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   # eu tenho o banco de pop pelas duas variaveis, aqui eu junto porque 
   # eu to trabalhando só com uma delas:
   
-  # colocar a regiao covid no banco de dados da população 
-  if(cluster != options_cluster[1]){
-    pops <- pops %>% 
-      group_by(codigo, regiao, variavel) %>%
-      summarise(populacao = sum(populacao)) 
-    
-
-  } else {
-    pops <- pops %>% 
-      group_by(codigo, regiao, variavel) %>%
-      summarise(populacao = sum(populacao))
-  }
+  pops <- pops %>% 
+    group_by(codigo, regiao, variavel) %>%
+    summarise(populacao = sum(populacao))
 
   
   # arrumar o banco de dados para ter todas as possíveis combinações 
