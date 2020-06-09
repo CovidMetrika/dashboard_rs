@@ -63,7 +63,7 @@ header <- dashboardHeader(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("Dados COVID-19 RS", tabName = "mapa_covid_rs"),
+    menuItem("COVID-19 RS", tabName = "mapa_covid_rs"),
     menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
     menuItem("Fonte de dados", tabName = "fonte"),
     menuItem("CovidMetrika", tabName = "sobre")
@@ -85,10 +85,17 @@ body <- dashboardBody(
               useShinyalert(),
               
               titlePanel(
-                column(
-                  width = 12,
-                  h1("Dados do COVID-19 Rio Grande do Sul"),
-                 # h5(em(data_hora_atual))
+                fluidRow(
+                  column(
+                    width = 6,
+                    h1("COVID-19 Rio Grande do Sul"),
+                    # h5(em(data_hora_atual))
+                  ),
+                  column(
+                    tags$img(src = "logos.png", 
+                             width = "100%"),
+                    width = 6
+                  )
                 )
               ),
               
@@ -180,10 +187,17 @@ body <- dashboardBody(
               
               tags$script(src = "https://kit.fontawesome.com/ab15947b75.js", crossorigin="anonymous"), 
               titlePanel(
-                column(
-                  width = 12,
-                  h1("Dados dos leitos UTI - Adulto no Rio Grande do Sul"),
-                #  h5(em(data_hora_atual))
+                fluidRow(
+                  column(
+                    width = 6,
+                    h1("Leitos UTI - Adulto no Rio Grande do Sul"),
+                    # h5(em(data_hora_atual))
+                  ),
+                  column(
+                    tags$img(src = "logos.png", 
+                             width = "100%"),
+                    width = 6
+                  )
                 )
               ),
               fluidRow(
@@ -360,7 +374,7 @@ body <- dashboardBody(
                 ), 
                 
                 tags$img(src = "logos.png", 
-                         height = "150", width = "1000")
+                         width = "100%")
               
               )
               
