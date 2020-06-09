@@ -1,7 +1,13 @@
 require(ggplot2)
 require(tidyr)
 require(dplyr)
+#------------------------------------------------ 
 
+# erros observados no banco de dados: 
+
+# variavél sexo possui um escrito 'femininio'
+
+dados_covid_rs$sexo <- ifelse(dados_covid_rs$sexo == 'Femininio', 'Feminino', dados_covid_rs$sexo)
 # ----------------------------------------------
 # F I L T R O S : 
 # ----------------------------------------------
