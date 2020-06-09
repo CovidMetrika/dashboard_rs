@@ -1,13 +1,7 @@
 require(ggplot2)
 require(tidyr)
 require(dplyr)
-#------------------------------------------------ 
 
-# erros observados no banco de dados: 
-
-# variavél sexo possui um escrito 'femininio'
-
-dados_covid_rs$sexo <- ifelse(dados_covid_rs$sexo == 'Femininio', 'Feminino', dados_covid_rs$sexo)
 # ----------------------------------------------
 # F I L T R O S : 
 # ----------------------------------------------
@@ -35,6 +29,7 @@ options_cluster <- c('Município', 'Região COVID')
 # ----------------------------------------------
 # variável sexo: 
 
+input = options_var[1]; cluster = options_cluster[2]; var = 'Faixa Etária'
 # default é casos confirmados e por município
 gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo'){
   
@@ -43,10 +38,13 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   # definir se o banco é de sexo ou faixa etária:
   if(var != 'sexo'){
     names(dados)[5] <- 'variavel'
+    
+    dados$variavel[which(dados$variavel %in% c("<1","01 a 04"))] <- "00 a 04"
+    dados$variavel[which(dados$variavel %in% c("05 a 09"))] <- "05 a 09"
+    
   } else {
     names(dados)[4] <- 'variavel'
   }
-  
   
   # definir se o banco é de municipio ou regiao covid:
   if(cluster != options_cluster[1]){
@@ -57,27 +55,51 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
       select(municipio, variavel, evolucao)
   }
   
+  names(temp)[1] <- 'regiao'
+  
   # agregar os dados: 
-  df <- data.frame(table(temp$municipio, temp$variavel, temp$evolucao))
+  df <- data.frame(table(temp$regiao, temp$variavel, temp$evolucao))
   names(df) <- c(names(temp), 'Contagem')
   
   # chamar o banco com as populações 
   pops <- readxl::read_excel(here::here('dados', 'FEE2017.xlsx'))
   
+  # selecionar so os dados necessarios
   if(var != 'sexo'){
     pops <- pops %>% 
       select(-sexo)
+    
+    pops$faixa[which(pops$faixa %in% c("0 a 04"))] <- "00 a 04"
+    pops$faixa[which(pops$faixa %in% c("5 a 09"))] <- "05 a 09"
+    
   } else {
     pops <- pops %>% 
       select(-faixa)
   }
   
-  names(pops)[4] <- 'variavel'
+  names(pops)[c(2,4)] <- c('regiao', 'variavel')
+  
+  # eu tenho o banco de pop pelas duas variaveis, aqui eu junto porque 
+  # eu to trabalhando só com uma delas:
+  
+  # colocar a regiao covid no banco de dados da população 
+  if(cluster != options_cluster[1]){
+    pops <- pops %>% 
+      group_by(codigo, regiao, variavel) %>%
+      summarise(populacao = sum(populacao)) 
+    
+
+  } else {
+    pops <- pops %>% 
+      group_by(codigo, regiao, variavel) %>%
+      summarise(populacao = sum(populacao))
+  }
+
   
   # arrumar o banco de dados para ter todas as possíveis combinações 
   # mesmo que isso seja zero. 
   
-  aux <- expand.grid(municipio = unique(pops$municipio), 
+  aux <- expand.grid(regiao = unique(pops$regiao), 
                      variavel = unique(pops$variavel), 
                      evolucao = as.vector(na.omit(unique(dados_covid_rs$evolucao)))
                      )
@@ -88,23 +110,15 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   # talvez deixar especificado no banco de dados que existem um número x de 
   # caso que não estão sendo considerados por causa que não sabemos a evolução 
   
-  # eu tenho o banco de pop pelas duas variaveis, aqui eu junto porque 
-  # eu to trabalhando só com uma delas:
-  
-  pops <- pops %>% 
-    group_by(codigo, municipio, variavel) %>%
-    summarise(populacao = sum(populacao))
-  
-  
   # pegando a populacao e juntando no banco com as contagens:
   df <- aux %>% 
-    left_join(df, by = c("municipio", "variavel", "evolucao")) %>% 
+    left_join(df, by = c("regiao", "variavel", "evolucao")) %>% 
     mutate(Contagem = replace_na(Contagem, 0))
   
   df <- df %>%
-    left_join(pops, by = c("municipio", "variavel")) %>% 
+    left_join(pops, by = c("regiao", "variavel")) %>% 
     mutate(contagem = Contagem) %>%
-    select(codigo, municipio, populacao, variavel, evolucao, contagem)
+    select(codigo, regiao, populacao, variavel, evolucao, contagem)
   
   # mudar a variável de evolução para colunas, pra poder fazer os gráficos 
   # separado pras variaveis (4)
@@ -119,12 +133,24 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   names(df)[5:7] <- c('cura', 'acompanhamento', 'mortes')
   
   dados <- df %>% 
-    mutate(casos = cura + acompanhamento) %>% 
-    mutate(taxa = casos/populacao*100000) %>% 
+    mutate(casos = cura + acompanhamento + mortes) %>% 
+    mutate(taxa_casos = casos/populacao*100000) %>% 
+    mutate(taxa_cura = cura/populacao*100000) %>% 
+    mutate(taxa_acomp = acompanhamento/populacao*100000) %>% 
     mutate(letalidade = mortes/casos) %>% 
-    select(codigo, municipio, variavel, casos, taxa, mortes, letalidade)
+    select(codigo, regiao, variavel, cura, taxa_cura, acompanhamento, taxa_acomp, 
+           casos, taxa_casos, mortes, letalidade)
   
+  # deixando os dados ajustados: 
   dados$letalidade <- ifelse(is.na(dados$letalidade) == 'TRUE', 0, round(dados$letalidade, 3))
+  dados$taxa_cura <- round(dados$taxa_cura, 3)
+  dados$taxa_acomp <- round(dados$taxa_acomp, 3)
+  dados$taxa_casos <- round(dados$taxa_casos, 3)
+  
+  # agora criando os plots: 
+  
+  ggplot(data = dados) + 
+    geom_bar(aes(fill = sexo), position = position_stack(reverse = TRUE)) 
   
 }
 
