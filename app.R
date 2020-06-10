@@ -34,20 +34,20 @@ source("data_wrangling.R", encoding = "UTF-8")
 
 opcoes <- list(
   "confirmados" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Confirmados"),
-  "incidencia" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Incidência"),
+  "confirmadostaxa" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Taxa de confirmados"),
   "obitos" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Óbitos"),
-  "mortalidade" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Mortalidade"),
+  "obitostaxa" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Taxa de óbitos"),
   "recuperados" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Recuperados"),
-  "acompanhamento" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Em acompanhamento")
+  "recuperadostaxa" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Taxa de recuperados"),
+  "acompanhamento" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Em acompanhamento"),
+  "acompanhamentotaxa" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Taxa de acompanhamento")
 )
 
-####
+####masi
 # Funções criadas
 ####
 
 # criando função personalizada para a caixa do usuário 
-
-
 
 #data_hora_atual <- str_c("Última atualização em ",format(with_tz(httr::GET("http://www.google.com/")$date, "America/Sao_Paulo"), "%H:%M %d/%m/%Y"))
 
@@ -56,21 +56,35 @@ opcoes <- list(
 ##############################################################################################
 
 
-header <- dashboardHeader(
-  title = "Dados COVID19 no Rio Grande do Sul",
-  titleWidth = 500
+header <- dashboardHeaderPlus(
+  enable_rightsidebar = T,
+  rightSidebarIcon = "gears",
+  title = tagList(
+    span(class = "logo-lg", "Painel COVID-19 RS"), 
+    icon = icon("tachometer-alt")),
+  titleWidth = 350
 )
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("COVID-19 RS", tabName = "mapa_covid_rs"),
-    menuItem("Leitos UTI - Adulto RS", tabName = "mapa_leitos_rs"),
-    menuItem("Fonte de dados", tabName = "fonte"),
-    menuItem("CovidMetrika", tabName = "sobre")
+    menuItem("COVID-19", tabName = "mapa_covid_rs", icon = icon("virus")),
+    menuItem("Leitos UTI - Adulto", tabName = "mapa_leitos_rs", icon = icon("procedures")),
+    menuItem("Fonte de dados", tabName = "fonte", icon = icon("archive")),
+    menuItem("CovidMetrika", tabName = "sobre", icon = icon("users"))
   ),
   width = 180
 )
 
+rightsidebar <- rightSidebar(
+  width = 320,
+  h3("Digite as regiões de interesse"),
+  selectizeInput("filtro_covid",
+                 label = NULL,
+                 choices = levels(as.factor(dados_covid_rs$regiao_covid)),
+                 selected = levels(as.factor(dados_covid_rs$regiao_covid)),
+                 multiple = T,
+                 width = "100%")
+)
 
 body <- dashboardBody(
   tabItems(
@@ -98,35 +112,23 @@ body <- dashboardBody(
                   )
                 )
               ),
-              
-              # reescrevendo as cores default para as que eu quero nas boxes de óbitos cartório
-              tags$style(".small-box.bg-lime { background-color: #757474 !important; color: #FFFFFF !important; }"),
-              
-              fluidRow(
-                valueBoxOutput("box_conf", width = 2),
-                valueBoxOutput("box_inci", width = 2),
-                valueBoxOutput("box_obit", width = 2),
-                valueBoxOutput("box_mort", width = 2),
-                valueBoxOutput("box_recu", width = 2),
-                valueBoxOutput("box_acom", width = 2)
-              ),
-              bsModal("modal_incidencia", "Incidência", "box_inci", size = "small", "Número de casos confirmados de COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
-              bsModal("modal_mortalidade", "Mortalidade", "box_mort", size = "small", "Número de óbitos confirmados por COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
-              setShadow(id = "box_inci", class = "small-box"),
-              setShadow(id = "box_mort", class = "small-box"),
+              #bsModal("modal_incidencia", "Incidência", "box_inci", size = "small", "Número de casos confirmados de COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
+              #bsModal("modal_mortalidade", "Mortalidade", "box_mort", size = "small", "Número de óbitos confirmados por COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
+              #setShadow(id = "box_inci", class = "small-box"),
+              #setShadow(id = "box_mort", class = "small-box"),
               fluidRow(
                 column(
-                  width = 3,
+                  width = 4,
                   h3("Selecione a variável de interesse"),
                   radioButtons("var_covid",
                                label = NULL,
-                               choices = list("Confirmados" = "confirmados","Incidência" = "incidencia","Óbitos" = "obitos","Mortalidade" = "mortalidade",
+                               choices = list("Confirmados" = "confirmados","Óbitos" = "obitos",
                                               "Recuperados" = "recuperados", "Em acompanhamento" = "acompanhamento"),
                                selected = "confirmados",
                                inline = T)
                 ),
                 column(
-                  width = 3,
+                  width = 4,
                   h3("Selecione o tipo de agrupamento"),
                   radioButtons("agrup_covid",
                                label = NULL,
@@ -135,15 +137,20 @@ body <- dashboardBody(
                                inline = T),
                 ),
                 column(
-                  width = 6,
-                  h3("Digite as regiões de interesse"),
-                  selectizeInput("filtro_covid",
-                                 label = NULL,
-                                 choices = levels(as.factor(dados_covid_rs$regiao_covid)),
-                                 selected = levels(as.factor(dados_covid_rs$regiao_covid)),
-                                 multiple = T,
-                                 width = "100%"),
+                  width = 4,
+                  h3("Escolha entre taxa por 100 mil habitantes ou número original"),
+                  radioButtons("tipo_covid",
+                               label = NULL,
+                               choices = list("Número" = "", "Taxa" = "taxa"),
+                               selected = "",
+                               inline = T),
                 )
+              ),
+              fluidRow(
+                valueBoxOutput("box_conf", width = 3),
+                valueBoxOutput("box_obit", width = 3),
+                valueBoxOutput("box_recu", width = 3),
+                valueBoxOutput("box_acom", width = 3)
               ),
               fluidRow(
                 column(
@@ -384,7 +391,8 @@ body <- dashboardBody(
   )
 )
 
-ui <- dashboardPage(header = header, sidebar = sidebar, body = body, skin = "red")
+ui <- dashboardPagePlus(enable_preloader = T, rightsidebar = rightsidebar, header = header, sidebar = sidebar, 
+                        body = body, skin = "red")
 
 ########################################################################
 # Server
@@ -403,14 +411,19 @@ server <- function(input, output) {
   
   # caixa de confirmados
   output$box_conf <- renderValueBox({
-    aux <- dados_covid_rs %>%
-      filter(regiao_covid %in% input$filtro_covid)
     
-    total <- nrow(aux)
+    aux <- dados_covid_rs %>%
+      filter(regiao_covid %in% input$filtro_covid) %>%
+      group_by(regiao_covid) %>%
+      summarise(confirmados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
+    
+    numero <- ifelse(input$tipo_covid == "taxa", 
+                     round(sum(aux$confirmados)*100000/sum(aux$populacao_estimada_regiao_covid),2),
+                     sum(aux$confirmados))
     
     valueBox(
-      total,
-      "Confirmados",
+      value = numero,
+      subtitle = opcoes[[str_c("confirmados",input$tipo_covid)]][["texto"]],
       icon = icon("virus"),
       color = "red" 
     )
@@ -437,13 +450,17 @@ server <- function(input, output) {
   output$box_obit <- renderValueBox({
     aux <- dados_covid_rs %>%
       filter(regiao_covid %in% input$filtro_covid) %>%
-      filter(evolucao == "OBITO")
+      filter(evolucao == "OBITO") %>%
+      group_by(regiao_covid) %>%
+      summarise(obitos = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    obitos <- nrow(aux)
+    numero <- ifelse(input$tipo_covid == "taxa", 
+                     round(sum(aux$obitos)*100000/sum(aux$populacao_estimada_regiao_covid),2), 
+                     sum(aux$obitos))
     
     valueBox(
-      obitos,
-      "Óbitos",
+      numero,
+      opcoes[[str_c("obitos",input$tipo_covid)]][["texto"]],
       icon = icon("heartbeat"),
       color = "purple"
     )
@@ -469,13 +486,17 @@ server <- function(input, output) {
   output$box_recu <- renderValueBox({
     aux <- dados_covid_rs %>%
       filter(regiao_covid %in% input$filtro_covid) %>%
-      filter(evolucao == "CURA")
+      filter(evolucao == "CURA") %>%
+      group_by(regiao_covid) %>%
+      summarise(recuperados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    recuperados <- nrow(aux)
+    numero <- ifelse(input$tipo_covid == "taxa", 
+                     round(sum(aux$recuperados)*100000/sum(aux$populacao_estimada_regiao_covid),2),
+                     sum(aux$recuperados))
     
     valueBox(
-      recuperados,
-      "Recuperados",
+      numero,
+      opcoes[[str_c("recuperados",input$tipo_covid)]][["texto"]],
       icon = icon("virus-slash"),
       color = "blue",
       href = NULL 
@@ -485,13 +506,17 @@ server <- function(input, output) {
   output$box_acom <- renderValueBox({
     aux <- dados_covid_rs %>%
       filter(regiao_covid %in% input$filtro_covid) %>%
-      filter(evolucao == "EM ACOMPANHAMENTO")
+      filter(evolucao == "EM ACOMPANHAMENTO") %>%
+      group_by(regiao_covid) %>%
+      summarise(acompanhamento = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    acompanhamento <- nrow(aux)
-    
+    numero <- ifelse(input$tipo_covid == "taxa", 
+                     round(sum(aux$acompanhamento)*100000/sum(aux$populacao_estimada_regiao_covid),2),
+                     sum(aux$acompanhamento))
+
     valueBox(
-      acompanhamento,
-      "Em acompanhamento",
+      numero,
+      opcoes[[str_c("acompanhamento",input$tipo_covid)]][["texto"]],
       icon = icon("clinic-medical"),
       color = "yellow"
     )
