@@ -34,13 +34,13 @@ source("data_wrangling.R", encoding = "UTF-8")
 
 opcoes <- list(
   "confirmados" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Confirmados"),
-  "confirmadostaxa" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Taxa de confirmados"),
+  "confirmados_taxa" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Taxa de confirmados"),
   "obitos" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Óbitos"),
-  "obitostaxa" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Taxa de óbitos"),
+  "obitos_taxa" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Taxa de óbitos"),
   "recuperados" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Recuperados"),
-  "recuperadostaxa" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Taxa de recuperados"),
+  "recuperados_taxa" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Taxa de recuperados"),
   "acompanhamento" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Em acompanhamento"),
-  "acompanhamentotaxa" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Taxa de acompanhamento")
+  "acompanhamento_taxa" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Taxa de acompanhamento")
 )
 
 ####masi
@@ -101,14 +101,14 @@ body <- dashboardBody(
               titlePanel(
                 fluidRow(
                   column(
-                    width = 6,
+                    width = 5,
                     h1("COVID-19 Rio Grande do Sul"),
                     # h5(em(data_hora_atual))
                   ),
                   column(
                     tags$img(src = "logos.png", 
                              width = "100%"),
-                    width = 6
+                    width = 7
                   )
                 )
               ),
@@ -141,7 +141,7 @@ body <- dashboardBody(
                   h3("Escolha entre taxa por 100 mil habitantes ou número original"),
                   radioButtons("tipo_covid",
                                label = NULL,
-                               choices = list("Número" = "", "Taxa" = "taxa"),
+                               choices = list("Número" = "", "Taxa" = "_taxa"),
                                selected = "",
                                inline = T),
                 )
@@ -179,7 +179,7 @@ body <- dashboardBody(
                   uiOutput("ui_filtro_quadradinhos")
                 ),
                 column(
-                  width = 9,
+                  width = 12,
                   box(
                     dataTableOutput("table_covid", height = "480px"),
                     width = 12
@@ -417,7 +417,7 @@ server <- function(input, output) {
       group_by(regiao_covid) %>%
       summarise(confirmados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    numero <- ifelse(input$tipo_covid == "taxa", 
+    numero <- ifelse(input$tipo_covid == "_taxa", 
                      round(sum(aux$confirmados)*100000/sum(aux$populacao_estimada_regiao_covid),2),
                      sum(aux$confirmados))
     
@@ -428,24 +428,6 @@ server <- function(input, output) {
       color = "red" 
     )
   })
-  # caixa incidência por 100 mil habitantes
-  output$box_inci <- renderValueBox({
-
-    aux <- dados_covid_rs %>%
-      filter(regiao_covid %in% input$filtro_covid) %>%
-      group_by(regiao_covid) %>%
-      summarise(confirmados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
-        
-    incidencia <- sum(aux$confirmados)*100000/sum(aux$populacao_estimada_regiao_covid)
-      
-    valueBox(
-      round(incidencia,2),
-      "Incidência*",
-      icon = icon("virus"),
-      color = "red",
-      href = NULL
-    )
-  })
   # caixa de óbitos
   output$box_obit <- renderValueBox({
     aux <- dados_covid_rs %>%
@@ -454,30 +436,13 @@ server <- function(input, output) {
       group_by(regiao_covid) %>%
       summarise(obitos = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    numero <- ifelse(input$tipo_covid == "taxa", 
+    numero <- ifelse(input$tipo_covid == "_taxa", 
                      round(sum(aux$obitos)*100000/sum(aux$populacao_estimada_regiao_covid),2), 
                      sum(aux$obitos))
     
     valueBox(
       numero,
       opcoes[[str_c("obitos",input$tipo_covid)]][["texto"]],
-      icon = icon("heartbeat"),
-      color = "purple"
-    )
-  })
-  # caixas de mortalidade
-  output$box_mort <- renderValueBox({
-    aux <- dados_covid_rs %>%
-      filter(regiao_covid %in% input$filtro_covid) %>%
-      filter(evolucao == "OBITO") %>%
-      group_by(regiao_covid) %>%
-      summarise(obitos = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
-    
-    mortalidade <- sum(aux$obitos)*100000/sum(aux$populacao_estimada_regiao_covid)
-
-    valueBox(
-      round(mortalidade,2),
-      "Mortalidade*",
       icon = icon("heartbeat"),
       color = "purple"
     )
@@ -490,7 +455,7 @@ server <- function(input, output) {
       group_by(regiao_covid) %>%
       summarise(recuperados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    numero <- ifelse(input$tipo_covid == "taxa", 
+    numero <- ifelse(input$tipo_covid == "_taxa", 
                      round(sum(aux$recuperados)*100000/sum(aux$populacao_estimada_regiao_covid),2),
                      sum(aux$recuperados))
     
@@ -510,7 +475,7 @@ server <- function(input, output) {
       group_by(regiao_covid) %>%
       summarise(acompanhamento = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
-    numero <- ifelse(input$tipo_covid == "taxa", 
+    numero <- ifelse(input$tipo_covid == "_taxa", 
                      round(sum(aux$acompanhamento)*100000/sum(aux$populacao_estimada_regiao_covid),2),
                      sum(aux$acompanhamento))
 
@@ -529,7 +494,7 @@ server <- function(input, output) {
   
   output$mapa_covid <- renderLeaflet({
     
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     
     if(input$agrup_covid=="municipio") {
       aux_mapa <- dados_mapa_rs %>%
@@ -551,7 +516,7 @@ server <- function(input, output) {
     
     intervalos[["brks"]][1:2] <- c(0,1)
     
-    pal <- colorBin(palette=opcoes[[input$var_covid]][["paleta"]], domain = y_quantidade, bins = intervalos[["brks"]])
+    pal <- colorBin(palette=opcoes[[str_c(input$var_covid,input$tipo_covid)]][["paleta"]], domain = y_quantidade, bins = intervalos[["brks"]])
     
     leaflet(aux_mapa) %>%
       addTiles(urlTemplate = "http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", attribution = 'Google') %>%
@@ -573,7 +538,7 @@ server <- function(input, output) {
       addLegend(pal = pal, values = round(y_quantidade,0), labFormat = function(type, cuts, p) {  # legenda para colorQuantile
         n = length(cuts)
         paste0(round(cuts[-n],0), " &ndash; ", round(cuts[-1],0))},
-        title = opcoes[[input$var_covid]][["texto"]],
+        title = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]],
         labels = ~variavel,
         position = "bottomright")
       
@@ -584,15 +549,18 @@ server <- function(input, output) {
   
   output$grafico_covid <- renderPlotly({
     
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
     pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
-    text_tooltip <- names(opcoes)[names(opcoes)!=input$var_covid]
+    text_tooltip <- names(opcoes)[names(opcoes)!=str_c(input$var_covid,input$tipo_covid)]
     outra_var <- sym(text_tooltip[1])
     outra_var2 <- sym(text_tooltip[2])
     outra_var3 <- sym(text_tooltip[3])
     outra_var4 <- sym(text_tooltip[4])
     outra_var5 <- sym(text_tooltip[5])
+    outra_var6 <- sym(text_tooltip[6])
+    outra_var7 <- sym(text_tooltip[7])
+    
     
     p <- dados_covid_rs %>%
       filter(regiao_covid %in% input$filtro_covid) %>%
@@ -600,14 +568,16 @@ server <- function(input, output) {
              acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
              recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
       group_by(!!var2) %>%
-      summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(!!pop_var)),obitos = sum(obitos, na.rm = T), 
-                mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), acompanhamento = sum(acompanhamento, na.rm = T), 
-                recuperados = sum(recuperados, na.rm = T), populacao = first(!!pop_var)) %>%
+      summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var)),
+                obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
+                acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                populacao = first(!!pop_var)) %>%
       arrange(desc(!!var)) %>%
       slice_head(n = 25) %>%
-      ggplot(aes(x = reorder(!!var2, !!var), y = !!var, text = paste(!!var2,paste0(input$var_covid," ",round(!!var,0)),paste0(text_tooltip[1]," ",round(!!outra_var,0)),paste0(text_tooltip[2]," ",round(!!outra_var2,0)),paste0(text_tooltip[3]," ",round(!!outra_var3,0)),paste0(text_tooltip[4]," ",round(!!outra_var4,0)),paste0(text_tooltip[5]," ",round(!!outra_var5,0)),paste0("populacao ",!!sym("populacao")),sep = "\n"))) +
-      geom_col(fill = opcoes[[input$var_covid]][["cor"]]) +
-      labs(x = input$agrup_covid, y = opcoes[[input$var_covid]][["texto"]]) +
+      ggplot(aes(x = reorder(!!var2, !!var), y = !!var, text = paste(!!var2,paste0(str_c(input$var_covid,input$tipo_covid)," ",round(!!var,0)),paste0(text_tooltip[1]," ",round(!!outra_var,0)),paste0(text_tooltip[2]," ",round(!!outra_var2,0)),paste0(text_tooltip[3]," ",round(!!outra_var3,0)),paste0(text_tooltip[4]," ",round(!!outra_var4,0)),paste0(text_tooltip[5]," ",round(!!outra_var5,0)),paste0(text_tooltip[6]," ",round(!!outra_var6,0)),paste0(text_tooltip[7]," ",round(!!outra_var7,0)),paste0("populacao ",!!sym("populacao")),sep = "\n"))) +
+      geom_col(fill = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]]) +
+      labs(x = input$agrup_covid, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]]) +
       coord_flip()
   
     ggplotly(p, tooltip = c("text"))
@@ -628,9 +598,11 @@ server <- function(input, output) {
              acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
              recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
       group_by(!!var2) %>%
-      summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(!!pop_var)),obitos = sum(obitos, na.rm = T), 
-                mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), acompanhamento = sum(acompanhamento, na.rm = T), 
-                recuperados = sum(recuperados, na.rm = T), populacao = first(!!pop_var)) %>%
+      summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var)),
+                obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
+                acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                populacao = first(!!pop_var)) %>%
       arrange(desc(confirmados)) %>%
       datatable(
         rownames = F,
@@ -644,13 +616,15 @@ server <- function(input, output) {
       ) %>%
       formatStyle(input$agrup_covid, fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
       formatStyle("confirmados", color = opcoes[["confirmados"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
-      formatStyle("incidencia", color = opcoes[["incidencia"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("confirmados_taxa", color = opcoes[["confirmados_taxa"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
       formatStyle("obitos", color = opcoes[["obitos"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
-      formatStyle("mortalidade", color = opcoes[["mortalidade"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("obitos_taxa", color = opcoes[["obitos_taxa"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
       formatStyle("recuperados", color = opcoes[["recuperados"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("recuperados_taxa", color = opcoes[["recuperados_taxa"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
       formatStyle("acompanhamento", color = opcoes[["acompanhamento"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
+      formatStyle("acompanhamento_taxa", color = opcoes[["acompanhamento_taxa"]][["cor"]], fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
       formatStyle("populacao", fontWeight = "bold", fontSize = "12px", backgroundColor ="#f0f0f0") %>%
-      formatRound(c("incidencia","mortalidade"), digits = 2)
+      formatRound(c("confirmados_taxa","obitos_taxa","recuperados_taxa","acompanhamento_taxa"), digits = 2)
       
   })
   
@@ -659,7 +633,7 @@ server <- function(input, output) {
   
   output$ui_serie_covid <- renderUI({
     
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
     
     aux <- dados_covid_rs %>%
@@ -702,9 +676,9 @@ server <- function(input, output) {
   
   output$serie_covid_dia <- renderPlotly({
     
-    #input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
+    #input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", tipo_covid = "_taxa",filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
 
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
     pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
     
@@ -726,24 +700,24 @@ server <- function(input, output) {
       aux <- dados_covid_rs
     }
     
-    if(input$var_covid %in% c("confirmados","incidencia")) {
+    if(input$var_covid %in% c("confirmados","confirmados_taxa")) {
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_covid) %>%
         group_by(data_confirmacao) %>%
-        summarise(confirmados = n(), incidencia = n()*100000/pop) %>%
+        summarise(confirmados = n(), confirmados_taxa = n()*100000/pop) %>%
         mutate(frequencia = !!var) %>%
         arrange(data_confirmacao)
       
       n_days <- max(aux$data_confirmacao)-min(aux$data_confirmacao)
       dias <- min(aux$data_confirmacao)+days(0:n_days)
-    } else if(input$var_covid %in% c("obitos","mortalidade","recuperados")){
+    } else if(input$var_covid %in% c("obitos","obitos_taxa","recuperados","recuperados_taxa")){
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_covid) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
                recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
         group_by(data_evolucao) %>%
-        summarise(obitos = sum(obitos, na.rm = T), mortalidade = sum(obitos, na.rm = T)*100000/pop,
-                  recuperados = sum(recuperados, na.rm = T)) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
+                  recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
         filter(!is.na(data_evolucao)) %>%
         mutate(frequencia = !!var) %>%
         ungroup() %>%
@@ -762,14 +736,16 @@ server <- function(input, output) {
       negativos <- aux %>%
         group_by(data_evolucao) %>%
         filter(!is.na(data_evolucao)) %>%
-        summarise(negativos = sum(obitos,na.rm = T)+sum(recuperados, na.rm =T)) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
+                  recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
+        mutate(negativos = !!rlang::sym(str_c("recuperados",input$tipo_covid))+!!rlang::sym(str_c("obitos",input$tipo_covid))) %>%
         mutate(data_confirmacao = data_evolucao) %>%
         select(-data_evolucao)
       
       acomp <- aux %>%
         group_by(data_sintomas) %>%
-        summarise(acompanhamento = sum(acompanhamento, na.rm = T)) %>%
-        mutate(frequencia = acompanhamento) %>%
+        summarise(acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/pop) %>%
+        mutate(frequencia = !!rlang::sym(str_c("acompanhamento",input$tipo_covid))) %>%
         mutate(data_confirmacao = data_sintomas) %>%
         select(-data_sintomas)
       
@@ -805,9 +781,9 @@ server <- function(input, output) {
                       geom_point(aes(x = data_confirmacao, y = acumulado, color = "Acumulado")) + 
                       geom_col(aes(x = data_confirmacao, y = frequencia, fill = "Frequência")) +
                       scale_x_discrete(limits = ordem) +
-                      scale_color_manual(values = list("Acumulado" = opcoes[[input$var_covid]][["cor"]])) +
-                      scale_fill_manual(values = list("Frequência" = opcoes[[input$var_covid]][["cor"]])) +
-                      labs(x = label_x, y = opcoes[[input$var_covid]][["texto"]], colour = NULL, fill = NULL) +
+                      scale_color_manual(values = list("Acumulado" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      scale_fill_manual(values = list("Frequência" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      labs(x = label_x, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colour = NULL, fill = NULL) +
                       theme(axis.text.x = element_text(angle=90,size=8, vjust = 0.5)) +
                       theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
                             panel.grid.major = element_blank(),
@@ -864,9 +840,9 @@ server <- function(input, output) {
                       geom_point(aes(x = data_confirmacao, y = acumulado, color = "Em acompanhamento")) + 
                       geom_col(aes(x = data_confirmacao, y = frequencia, fill = "Frequência")) +
                       scale_x_discrete(limits = ordem) +
-                      scale_color_manual(values = list("Em acompanhamento" = opcoes[[input$var_covid]][["cor"]])) +
-                      scale_fill_manual(values = list("Frequência" = opcoes[[input$var_covid]][["cor"]])) +
-                      labs(x = label_x, y = opcoes[[input$var_covid]][["texto"]], colour = NULL, fill = NULL) +
+                      scale_color_manual(values = list("Em acompanhamento" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      scale_fill_manual(values = list("Frequência" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      labs(x = label_x, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colour = NULL, fill = NULL) +
                       theme(axis.text.x = element_text(angle=90,size=8, vjust = 0.5)) +
                       theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
                             panel.grid.major = element_blank(),
@@ -905,7 +881,7 @@ server <- function(input, output) {
     
     #input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
     
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
     pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
     
@@ -927,24 +903,24 @@ server <- function(input, output) {
       aux <- dados_covid_rs
     }
     
-    if(input$var_covid %in% c("confirmados","incidencia")) {
+    if(input$var_covid %in% c("confirmados","confirmados_taxa")) {
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_covid) %>%
         group_by(semana_epidemiologica_confirmacao) %>%
-        summarise(confirmados = n(), incidencia = n()*100000/pop) %>%
+        summarise(confirmados = n(), confirmados_taxa = n()*100000/pop) %>%
         mutate(frequencia = !!var) %>%
         arrange(semana_epidemiologica_confirmacao)
       
       n_weeks <- max(aux$semana_epidemiologica_confirmacao)-min(aux$semana_epidemiologica_confirmacao)
       weeks <- min(aux$semana_epidemiologica_confirmacao):(min(aux$semana_epidemiologica_confirmacao)+n_weeks)
-    } else if(input$var_covid %in% c("obitos","mortalidade","recuperados")){
+    } else if(input$var_covid %in% c("obitos","obitos_taxa","recuperados","recuperados_taxa")){
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_covid) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
                recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
         group_by(semana_epidemiologica_evolucao) %>%
-        summarise(obitos = sum(obitos, na.rm = T), mortalidade = sum(obitos, na.rm = T)*100000/pop,
-                  recuperados = sum(recuperados, na.rm = T)) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
+                  recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
         filter(!is.na(semana_epidemiologica_evolucao)) %>%
         mutate(frequencia = !!var) %>%
         ungroup() %>%
@@ -964,14 +940,15 @@ server <- function(input, output) {
       negativos <- aux %>%
         group_by(semana_epidemiologica_evolucao) %>%
         filter(!is.na(semana_epidemiologica_evolucao)) %>%
-        summarise(negativos = sum(obitos,na.rm = T)+sum(recuperados, na.rm =T)) %>%
-        mutate(semana_epidemiologica_confirmacao = semana_epidemiologica_evolucao) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
+                  recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
+        mutate(negativos = !!rlang::sym(str_c("recuperados",input$tipo_covid))+!!rlang::sym(str_c("obitos",input$tipo_covid))) %>%
         select(-semana_epidemiologica_evolucao)
       
       acomp <- aux %>%
         group_by(semana_epidemiologica_sintomas) %>%
-        summarise(acompanhamento = sum(acompanhamento, na.rm = T)) %>%
-        mutate(frequencia = acompanhamento) %>%
+        summarise(acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/pop) %>%
+        mutate(frequencia = !!rlang::sym(str_c("acompanhamento",input$tipo_covid))) %>%
         mutate(semana_epidemiologica_confirmacao = semana_epidemiologica_sintomas) %>%
         select(-semana_epidemiologica_sintomas)
       
@@ -1008,9 +985,9 @@ server <- function(input, output) {
                       geom_point(aes(x = semana_epidemiologica_confirmacao, y = acumulado, color = "Acumulado")) + 
                       geom_col(aes(x = semana_epidemiologica_confirmacao, y = frequencia, fill = "Frequência")) +
                       scale_x_discrete(limits = ordem) +
-                      scale_color_manual(values = list("Acumulado" = opcoes[[input$var_covid]][["cor"]])) +
-                      scale_fill_manual(values = list("Frequência" = opcoes[[input$var_covid]][["cor"]])) +
-                      labs(x = label_x, y = opcoes[[input$var_covid]][["texto"]], colour = NULL, fill = NULL) +
+                      scale_color_manual(values = list("Acumulado" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      scale_fill_manual(values = list("Frequência" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      labs(x = label_x, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colour = NULL, fill = NULL) +
                       theme(axis.text.x = element_text(angle=90,size=8, vjust = 0.5)) +
                       theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
                             panel.grid.major = element_blank(),
@@ -1068,9 +1045,9 @@ server <- function(input, output) {
                       geom_point(aes(x = semana_epidemiologica_confirmacao, y = acumulado, color = "Em acompanhamento")) + 
                       geom_col(aes(x = semana_epidemiologica_confirmacao, y = frequencia, fill = "Frequência")) +
                       scale_x_discrete(limits = ordem) +
-                      scale_color_manual(values = list("Em acompanhamento" = opcoes[[input$var_covid]][["cor"]])) +
-                      scale_fill_manual(values = list("Frequência" = opcoes[[input$var_covid]][["cor"]])) +
-                      labs(x = label_x, y = opcoes[[input$var_covid]][["texto"]], colour = NULL, fill = NULL) +
+                      scale_color_manual(values = list("Em acompanhamento" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      scale_fill_manual(values = list("Frequência" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
+                      labs(x = label_x, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colour = NULL, fill = NULL) +
                       theme(axis.text.x = element_text(angle=90,size=8, vjust = 0.5)) +
                       theme(plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
                             panel.grid.major = element_blank(),
@@ -1105,7 +1082,7 @@ server <- function(input, output) {
   # ui_filtro_quadradinhos
   output$ui_filtro_quadradinhos <- renderUI({
     
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
     pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
     
@@ -1115,9 +1092,11 @@ server <- function(input, output) {
              acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
              recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
       group_by(!!var2) %>%
-      summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(!!pop_var)),obitos = sum(obitos, na.rm = T), 
-                mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), acompanhamento = sum(acompanhamento, na.rm = T), 
-                recuperados = sum(recuperados, na.rm = T), populacao = first(!!pop_var)) %>%
+      summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var)),
+                obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
+                acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                populacao = first(!!pop_var)) %>%
       arrange(desc(!!var))
     
     aux <- as.data.frame(aux)
@@ -1145,15 +1124,15 @@ server <- function(input, output) {
     
     #input <- list(var_covid = "obitos", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_quadradinhos = aux[1:15,input$agrup_covid])
     
-    var <- rlang::sym(input$var_covid)
+    var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
     pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid))
     
-    if(input$var_covid %in% c("confirmados","incidencia")) {
+    if(input$var_covid %in% c("confirmados","confirmados_taxa")) {
       aux <- dados_covid_rs %>%
         filter(!!var2 %in% input$filtro_quadradinhos) %>%
         group_by(data_confirmacao, !!var2) %>%
-        summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(!!pop_var))) %>%
+        summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var))) %>%
         mutate(frequencia = !!var) %>%
         arrange(data_confirmacao)
     } else {
@@ -1161,7 +1140,7 @@ server <- function(input, output) {
         filter(!!var2 %in% input$filtro_quadradinhos) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0)) %>% 
         group_by(data_evolucao,!!var2) %>%
-        summarise(obitos = sum(obitos, na.rm = T), mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
         filter(!is.na(data_evolucao)) %>%
         mutate(frequencia = !!var) %>%
         ungroup() %>%
@@ -1211,10 +1190,10 @@ server <- function(input, output) {
       }
     }
     
-    p <- ggplot(aux, aes(x = data_confirmacao, y = reorder(!!var2,frequencia, FUN = sum), fill = acumulado, text = paste(!!var2,paste0(input$var_covid," ",round(acumulado,0)),sep = "\n"))) +
+    p <- ggplot(aux, aes(x = data_confirmacao, y = reorder(!!var2,frequencia, FUN = sum), fill = acumulado, text = paste(!!var2,paste0(str_c(input$var_covid,input$tipo_covid)," ",round(acumulado,0)),sep = "\n"))) +
       geom_tile() +
       labs(y = input$agrup_covid) +
-      scale_fill_gradientn(trans = "sqrt",name = opcoes[[input$var_covid]][["texto"]], colours = brewer.pal(9,opcoes[[input$var_covid]][["paleta"]])) +
+      scale_fill_gradientn(trans = "sqrt",name = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colours = brewer.pal(9,opcoes[[str_c(input$var_covid,input$tipo_covid)]][["paleta"]])) +
       scale_x_date(date_breaks = "1 month", date_labels = "%b") +
       theme_tufte(base_family="Helvetica")
     

@@ -122,10 +122,10 @@ dados_covid_join <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(municipio, codigo_ibge) %>%
-  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_municipio)),
-            obitos = sum(obitos, na.rm = T), 
-            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
-            acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_municipio)),
+            obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
+            acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa  = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
+            recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
             populacao_estimada_municipio = first(populacao_estimada_municipio)) %>%
   ungroup() %>%
   select(-c(municipio))
@@ -135,9 +135,10 @@ dados_covid_join_reg <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
-  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),
-            obitos = sum(obitos, na.rm = T), 
-            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_municipio)),
+            obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
+            acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa  = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
+            recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
             populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_regiao_covid))) %>%
   ungroup()
 
