@@ -103,7 +103,13 @@ body <- dashboardBody(
                   column(
                     width = 5,
                     h1("COVID-19 Rio Grande do Sul"),
+                    #h3("É possível escolher quais são as regiões do RS devem ser apresentadas, 
+                    #o ícone no canto superior direito possibilita essa seleção")
+                    #para isso
+                    #    ícone no canto superior direito há um ícone em que ")
                     # h5(em(data_hora_atual))
+                    h3("O ícone no canto superior direito seleciona quais 
+                    as regiões covid do RS serão apresentadas")
                   ),
                   column(
                     tags$img(src = "logos.png", 
