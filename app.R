@@ -1,5 +1,4 @@
 library(shiny)
-library(tidyverse)
 library(sf)
 library(stringr)
 library(readxl)
@@ -16,6 +15,7 @@ library(curl)
 library(abjutils)
 library(shinydashboard)
 library(plotly)
+library(tidyverse)
 library(scales)
 library(shinydashboardPlus)
 library(shinyEffects)
@@ -35,8 +35,8 @@ source("data_wrangling.R", encoding = "UTF-8")
 opcoes <- list(
   "confirmados" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Confirmados"),
   "confirmados_taxa" = list("cor" = "#dd4b39", "paleta" = "Reds", "texto" = "Taxa de confirmados"),
-  "obitos" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Óbitos"),
-  "obitos_taxa" = list("cor" = "#605ca8", "paleta" = "Purples", "texto" = "Taxa de óbitos"),
+  "obitos" = list("cor" = "#2e2e2e", "paleta" = "Greys", "texto" = "Óbitos"),
+  "obitos_taxa" = list("cor" = "#2e2e2e", "paleta" = "Greys", "texto" = "Taxa de óbitos"),
   "recuperados" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Recuperados"),
   "recuperados_taxa" = list("cor" = "#0073b7", "paleta" = "Blues", "texto" = "Taxa de recuperados"),
   "acompanhamento" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Em acompanhamento"),
@@ -118,6 +118,9 @@ body <- dashboardBody(
                   )
                 )
               ),
+              # reescrevendo as cores default para as que eu quero nas boxes de óbitos cartório
+              
+              tags$style(".small-box.bg-lime { background-color: #404040 !important; color: #FFFFFF !important; }"),
               #bsModal("modal_incidencia", "Incidência", "box_inci", size = "small", "Número de casos confirmados de COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
               #bsModal("modal_mortalidade", "Mortalidade", "box_mort", size = "small", "Número de óbitos confirmados por COVID-19 por 100 000 habitantes na população de determinado espaço geográfico"),
               #setShadow(id = "box_inci", class = "small-box"),
@@ -450,7 +453,7 @@ server <- function(input, output) {
       numero,
       opcoes[[str_c("obitos",input$tipo_covid)]][["texto"]],
       icon = icon("heartbeat"),
-      color = "purple"
+      color = "lime"
     )
   })
   # caixa de recuperados
@@ -885,7 +888,7 @@ server <- function(input, output) {
   
   output$serie_covid_sem <- renderPlotly({
     
-    #input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
+    input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", tipo_covid = "",filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
     
     var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
@@ -949,6 +952,7 @@ server <- function(input, output) {
         summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
                   recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
         mutate(negativos = !!rlang::sym(str_c("recuperados",input$tipo_covid))+!!rlang::sym(str_c("obitos",input$tipo_covid))) %>%
+        mutate(semana_epidemiologica_confirmacao = semana_epidemiologica_evolucao) %>%
         select(-semana_epidemiologica_evolucao)
       
       acomp <- aux %>%
