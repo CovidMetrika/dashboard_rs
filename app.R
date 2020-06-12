@@ -67,8 +67,8 @@ header <- dashboardHeaderPlus(
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
-    menuItem("COVID-19", tabName = "mapa_covid_rs", icon = icon("virus")),
     menuItem("Leitos UTI - Adulto", tabName = "mapa_leitos_rs", icon = icon("procedures")),
+    menuItem("COVID-19", tabName = "mapa_covid_rs", icon = icon("virus")),
     menuItem("Fonte de dados", tabName = "fonte", icon = icon("archive")),
     menuItem("CovidMetrika", tabName = "sobre", icon = icon("users"))
   ),
@@ -229,7 +229,7 @@ body <- dashboardBody(
                   radioButtons("var_leitos",
                                label = NULL,
                                choices = list("Leitos totais" = "leitos_total","Leitos disponíveis" = "leitos_disponiveis","Lotação" = "lotacao", "Leitos ocupados COVID-19" = "leitos_covid"),
-                               selected = "leitos_disponiveis",
+                               selected = "leitos_covid",
                                inline = T)
                 ),
                 column(
@@ -238,7 +238,7 @@ body <- dashboardBody(
                   radioButtons("agrup_leitos",
                                label = NULL,
                                choices = list("Hospital" = "hospital", "Municípios" = "municipio", "Regiões COVID" = "regiao_covid"),
-                               selected = "municipio",
+                               selected = "hospital",
                                inline = T),
                 ),
                 column(
