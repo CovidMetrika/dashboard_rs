@@ -220,6 +220,24 @@ leitos_uti <- map(caminhos, read_csv) %>%
 leitos_uti <- leitos_uti %>%
   mutate(hospital = ifelse(cnes == 2248190,"Hospital Santa Casa De Uruguaiana",hospital))
 
+# adicionando o municiío ao nome do hospital para que cada hospital fique único
+
+aux <- leitos_uti %>%
+  filter(data_atualizacao == max(data_atualizacao)) %>%
+  group_by(hospital) %>%
+  summarise(n = n(), cnes = cnes) %>%
+  filter(n > 1) %>%
+  mutate(hospital_unico = str_c(hospital,"_",cnes)) %>%
+  select(-n)
+
+hospitais_troca <- unique(teste$hospital)
+
+leitos_uti <- leitos_uti %>%
+  left_join(aux, by = c("hospital","cnes")) %>%
+  mutate(hospital = ifelse(hospital %in% hospitais_troca, hospital_unico, hospital)) %>%
+  select(-hospital_unico)
+
+
 # resolvendo problema dos dados incompletos
 # pegando dados de dias anteriores para os dias sem dado
 
