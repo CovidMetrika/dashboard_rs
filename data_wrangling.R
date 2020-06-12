@@ -1,4 +1,3 @@
-library(tidyverse)
 library(rgeos)
 library(httr)
 library(jsonlite)
@@ -7,6 +6,7 @@ library(sf)
 library(jsonlite)
 library(abjutils)
 library(lubridate)
+library(tidyverse)
 
 # esse script serve para organizar todos objetos de banco de dados que utilizarei no aplicativo
 # são 3 principais:
@@ -46,8 +46,8 @@ regiao_covid_mun <- read_csv("dados/shapefiles/regioes_covid/banco_mun_regiao_co
 rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregiao.csv") %>%
   mutate(municipio = str_to_title(municipio),
          mesorregiao = str_to_title(mesorregiao)) %>%
-  left_join(codigos_cidades, by = "municipio") %>%  # atribuindo o código
-  select(-municipio)
+  left_join(codigos_cidades, by = "municipio") %>% # atribuindo o código
+  dplyr::select(-c(municipio))
 
 # lendo dados da SES-RS
 
@@ -88,7 +88,7 @@ dados_covid_rs[dados_covid_rs$municipio=="Santana Do Livramento","municipio"] <-
 dados_covid_rs <- dados_covid_rs %>%
   left_join(codigos_cidades, by = c("municipio")) %>%
   left_join(rs_mesoregiao_microregiao, by = "codigo_ibge") %>%
-  select(-codigo_ibge_6_digitos)
+  select(!codigo_ibge_6_digitos)
 
 # pegando os dados de estimativas populacionais dos municipios
 
@@ -122,22 +122,23 @@ dados_covid_join <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(municipio, codigo_ibge) %>%
-  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_municipio)),
-            obitos = sum(obitos, na.rm = T), 
-            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
-            acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_municipio)),
+            obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
+            acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa  = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
+            recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
             populacao_estimada_municipio = first(populacao_estimada_municipio)) %>%
   ungroup() %>%
-  select(-c(municipio))
+  select(!c(municipio))
 
 dados_covid_join_reg <- dados_covid_rs %>%
   mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
-  summarise(confirmados = n(), incidencia = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),
-            obitos = sum(obitos, na.rm = T), 
-            mortalidade = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)), acompanhamento = sum(acompanhamento, na.rm = T), recuperados = sum(recuperados, na.rm = T),
+  summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_municipio)),
+            obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
+            acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa  = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
+            recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
             populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_regiao_covid))) %>%
   ungroup()
 
@@ -185,7 +186,8 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_29_05.csv","leitos_dados_ses_30_05.csv","leitos_dados_ses_31_05.csv",
                          "leitos_dados_ses_01_06.csv","leitos_dados_ses_02_06.csv","leitos_dados_ses_03_06.csv",
                          "leitos_dados_ses_04_06.csv","leitos_dados_ses_05_06.csv","leitos_dados_ses_06_06.csv",
-                         "leitos_dados_ses_07_06.csv","leitos_dados_ses_08_06.csv")
+                         "leitos_dados_ses_07_06.csv","leitos_dados_ses_08_06.csv","leitos_dados_ses_09_06.csv",
+                         "leitos_dados_ses_10_06.csv","leitos_dados_ses_11_06.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
@@ -208,7 +210,7 @@ leitos_uti <- map(caminhos, read_csv) %>%
          leitos_total = Leitos, leitos_covid = Confirmados, regiao_covid, codigo_regiao_covid, data_hora_atualizacao = `Últ Atualização`) %>%
   left_join(dados_cnes, by = c("cnes" = "CNES")) %>%
   filter(data_atualizacao > "2020-04-27") %>%
-  select(-data_hora_atualizacao) %>%
+  select(!data_hora_atualizacao) %>%
   arrange(data_atualizacao)
 
 # resolvendo problema da mudança de nome no hospital de uruguaiana
@@ -218,23 +220,41 @@ leitos_uti <- map(caminhos, read_csv) %>%
 leitos_uti <- leitos_uti %>%
   mutate(hospital = ifelse(cnes == 2248190,"Hospital Santa Casa De Uruguaiana",hospital))
 
+# adicionando o municiío ao nome do hospital para que cada hospital fique único
+
+aux <- leitos_uti %>%
+  filter(data_atualizacao == max(data_atualizacao)) %>%
+  group_by(hospital) %>%
+  summarise(n = n(), cnes = cnes) %>%
+  filter(n > 1) %>%
+  mutate(hospital_unico = str_c(hospital,"_",cnes)) %>%
+  select(-n)
+
+hospitais_troca <- unique(teste$hospital)
+
+leitos_uti <- leitos_uti %>%
+  left_join(aux, by = c("hospital","cnes")) %>%
+  mutate(hospital = ifelse(hospital %in% hospitais_troca, hospital_unico, hospital)) %>%
+  select(-hospital_unico)
+
+
 # resolvendo problema dos dados incompletos
 # pegando dados de dias anteriores para os dias sem dado
 
 # colocando as datas como se fosse colunas para verificar quais os dados que estão faltando para cada hospital
 
 aux_total <- leitos_uti %>%
-  select(-c(leitos_internacoes,leitos_covid)) %>%
+  select(!c(leitos_internacoes,leitos_covid)) %>%
   pivot_wider(names_from = data_atualizacao, values_from = leitos_total) %>%
   as.data.frame()
 
 aux_internados <- leitos_uti %>%
-  select(-c(leitos_total,leitos_covid)) %>%
+  select(!c(leitos_total,leitos_covid)) %>%
   pivot_wider(names_from = data_atualizacao, values_from = leitos_internacoes) %>%
   as.data.frame()
 
 aux_covid <- leitos_uti %>%
-  select(-c(leitos_total,leitos_internacoes)) %>%
+  select(!c(leitos_total,leitos_internacoes)) %>%
   pivot_wider(names_from = data_atualizacao, values_from = leitos_covid) %>%
   as.data.frame()
 
@@ -303,13 +323,13 @@ semana <- read_csv("dados/semana_epidemio_dia.csv")
 dados_covid_rs <- dados_covid_rs %>%
   left_join(semana, by = c("data_confirmacao" = "dia")) %>%
   mutate(semana_epidemiologica_confirmacao = semana_epidemiologica) %>%
-  select(-semana_epidemiologica) %>%
+  select(!semana_epidemiologica) %>%
   left_join(semana, by = c("data_sintomas" = "dia")) %>%
   mutate(semana_epidemiologica_sintomas = semana_epidemiologica) %>%
-  select(-semana_epidemiologica) %>%
+  select(!semana_epidemiologica) %>%
   left_join(semana, by = c("data_evolucao" = "dia")) %>%
   mutate(semana_epidemiologica_evolucao = semana_epidemiologica) %>%
-  select(-semana_epidemiologica)
+  select(!semana_epidemiologica)
 
 leitos_uti <- leitos_uti %>%
   left_join(semana, by = c("data_atualizacao" = "dia"))
