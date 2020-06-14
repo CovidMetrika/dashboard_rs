@@ -13,13 +13,6 @@ library(waffle)
 source("data_wrangling.R", encoding = "UTF-8")
 
 
-rescale01 <- function(x) {
-  rng <- range(x, na.rm = TRUE)
-  (x - rng[1]) / (rng[2] - rng[1])
-}
-df <- tibble(x = 1:4, y = rnorm(4))
-df %>% mutate(across(where(is.numeric), cumsum))
-
 # plot waffle - em construção
 plot_waffle <- function(){
   
@@ -152,3 +145,9 @@ plot_evolucao <- function(){
 }
 
 plot_evolucao()
+
+
+# plot
+
+
+
