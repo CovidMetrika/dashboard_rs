@@ -135,10 +135,10 @@ dados_covid_join_reg <- dados_covid_rs %>%
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
          recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
-  summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_municipio)),
-            obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
-            acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa  = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
-            recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)),
+  summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),
+            obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)), 
+            acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa  = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)),
+            recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)),
             populacao_estimada_regiao_covid = sum(as.numeric(populacao_estimada_regiao_covid))) %>%
   ungroup()
 
@@ -188,7 +188,7 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_04_06.csv","leitos_dados_ses_05_06.csv","leitos_dados_ses_06_06.csv",
                          "leitos_dados_ses_07_06.csv","leitos_dados_ses_08_06.csv","leitos_dados_ses_09_06.csv",
                          "leitos_dados_ses_10_06.csv","leitos_dados_ses_11_06.csv","leitos_dados_ses_12_06.csv",
-                         "leitos_dados_ses_13_06.csv")
+                         "leitos_dados_ses_13_06.csv","leitos_dados_ses_14_06.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
