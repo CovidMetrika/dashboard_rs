@@ -3,11 +3,10 @@
 library(tidyverse)
 library(tidyselect)
 library(plotly)
-library(extrafont)
+library(emojifont)
 
 library(waffle)
 library(hrbrthemes)
-library(waffle)
 
 # pegando dados do script de manipulação
 source("data_wrangling.R", encoding = "UTF-8")
@@ -37,7 +36,7 @@ plot_waffle <- function(){
   parts <- c(80, 30, 20, 10)
   waffle(parts, rows=8, use_glyph = "male")
   
-  parts <- data.frame(
+  warningsparts <- data.frame(
     names = LETTERS[1:4],
     vals = c(80, 30, 20, 10)
   )
