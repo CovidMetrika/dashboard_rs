@@ -188,7 +188,7 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_04_06.csv","leitos_dados_ses_05_06.csv","leitos_dados_ses_06_06.csv",
                          "leitos_dados_ses_07_06.csv","leitos_dados_ses_08_06.csv","leitos_dados_ses_09_06.csv",
                          "leitos_dados_ses_10_06.csv","leitos_dados_ses_11_06.csv","leitos_dados_ses_12_06.csv",
-                         "leitos_dados_ses_13_06.csv","leitos_dados_ses_14_06.csv")
+                         "leitos_dados_ses_13_06.csv","leitos_dados_ses_14_06.csv","leitos_dados_ses_15_06.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
