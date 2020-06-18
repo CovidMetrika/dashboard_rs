@@ -21,23 +21,23 @@ require(dplyr)
 # ----------------------------------------------
 
 # input é o tipo de variavel:
-options_var <- c('Casos Confirmados', 'Óbitos', 'Recuperados', 'Em Acompanhamento')
+options_dados <- c('Casos Confirmados', 'Óbitos', 'Recuperados', 'Em Acompanhamento')
 
 # cluster é o tipo de agrupamento: 
 options_cluster <- c('Município', 'Região COVID')
 
-# ----------------------------------------------
-# variável sexo: 
+# variável: 
+options_var <- c('Sexo', 'Faixa Etária')
 
-input = options_var[1]; cluster = options_cluster[2]; var = 'Faixa Etária'
-# default é casos confirmados e por município
+# formato, se taxa, numero abs ou a tabela com os dados
+options_format <- c('Números Absolutos', 'Taxa', 'Tabela')
 
-gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo'){
+gg <- function(input, cluster, var, formato){
   
   dados <- dados_covid_rs
   
   # definir se o banco é de sexo ou faixa etária:
-  if(var != 'sexo'){
+  if(var != options_var[1]){
     names(dados)[5] <- 'variavel'
     
     dados$variavel[which(dados$variavel %in% c("<1","01 a 04"))] <- "00 a 04"
@@ -66,7 +66,7 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   pops <- readxl::read_excel(here::here('dados', 'FEE2017.xlsx'))
   
   # selecionar so os dados necessarios:
-  if(var != 'sexo'){
+  if(var != options_var[1]){
     pops <- pops %>% 
       select(-sexo)
     
@@ -135,7 +135,7 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   df <- df %>% 
     tidyr::spread(key = evolucao, value = contagem)
   
-  # juntar CURA + EM ACOMPANHAMENTO = CASOS CONFIRMADOS 
+  # juntar CURA + EM ACOMPANHAMENTO + OBITOS = CASOS CONFIRMADOS 
   
   names(df)[4:6] <- c('cura', 'acompanhamento', 'mortes')
   
@@ -156,15 +156,75 @@ gg <- function(input = options_var[1], cluster = options_cluster[1], var = 'sexo
   dados$taxa_morte <- round(dados$taxa_morte, 3)
   dados$letalidade <- round(dados$letalidade, 3)
   
-}
+  # agora que o banco de dados tá pronto 
+  # agora faz o filtro pra escolher qual variável quer enxergar 
+  
+  if(input == options_dados[1]){
+    df <- dados %>%
+      select(regiao, variavel, casos, taxa_casos)
+  } else { 
+    if(input == options_dados[2]) {
+      df <- dados %>%
+        select(regiao, variavel, mortes, taxa_morte)
+    } else {
+      if(input == options_dados[3]) { 
+        df <- dados %>%
+          select(regiao, variavel, cura, taxa_cura)
+      }
+      df <- dados %>%
+        select(regiao, variavel, acompanhamento, taxa_acomp)
+    }
+  }
+  
+  df <- df %>% 
+    mutate(regiao = tools::toTitleCase(tolower(df$regiao)))
+    
+  names(df) <- c('regiao', 'variavel', 'abs', 'taxa')
+  
+  df$variavel <- factor(df$variavel, levels = unique(df$variavel))
+  df$regiao <- factor(df$regiao, levels = unique(df$regiao))
+  df <- df[with(df, order(regiao, variavel)),]
+  
+  
+  plot_abs <- ggplot(df, aes(x = abs, y = regiao)) +
+    geom_col(aes(fill = variavel), 
+             position = position_stack(reverse = TRUE)) +
+    theme(legend.position = "top") + 
+    labs(y = NULL, 
+         x = paste0(options_dados[which(input == options_dados)]), 
+         fill = paste0(tools::toTitleCase(var), ':')) + 
+    theme(legend.position = 'bottom')
+  
+  plot_tx <- ggplot(df, aes(x = taxa, y = regiao)) +
+    geom_col(aes(fill = variavel), 
+             position = position_stack(reverse = TRUE)) +
+    theme(legend.position = "top") + 
+    labs(y = NULL, 
+         x = paste0(options_dados[which(input == options_dados)], '*'), 
+         fill = paste0(tools::toTitleCase(var), ':'), 
+         caption = '* por 100.000 habitantes') + 
+    theme(legend.position = 'bottom')
+  
+  table <- df
+  names(table) <- c(cluster, var , input, paste0('Taxa de ', input, ' (Por 100 mil hab.)'))
+  
+  results <- if(formato == options_format[1]){
+    plot_abs
+  } else {
+    if(formato == options_format[2]){
+      plot_tx
+    } else {
+      table
+    }
+  }
+  
+  print(results)
+  
+} # final da função
 
 
-ggplot(temp, aes(y = variavel)) +
-  geom_bar(aes(fill = sexo), position = position_stack(reverse = TRUE)) +
-  theme(legend.position = "top")
-
-
-
-
-
+gg(input = options_dados[3], 
+   cluster = options_cluster[2], 
+   var = options_var[1], 
+   formato = options_format[1])
 
