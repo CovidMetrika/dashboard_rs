@@ -718,28 +718,25 @@ server <- function(input, output) {
     
     aux <- as.data.frame(aux)
     
-    if(input$var_covid %in% c("acompanhamento","recuperados")) {
-      "Em Construção"
-    } else {
-      box(
-        width = 12,
-        selectInput(
-          "filtro_quadradinhos",
-          label = "Selecione os municípios de interesse(por default estão os 15 de maior quantidade da variável escolhida)",
-          choices = aux[,input$agrup_covid],
-          selected = aux[1:15,input$agrup_covid],
-          multiple = T
-        ),
-        plotlyOutput("plot_quadradinhos", height = 650L)
-      )
-    }
+    box(
+      width = 12,
+      selectInput(
+        "filtro_quadradinhos",
+        label = "Selecione os municípios de interesse(por default estão os 15 de maior quantidade da variável escolhida)",
+        choices = aux[,input$agrup_covid],
+        selected = aux[1:15,input$agrup_covid],
+        multiple = T
+      ),
+      plotlyOutput("plot_quadradinhos", height = 650L)
+    )
+    
     
   })
   
   # plot_quadradinhos
   output$plot_quadradinhos <- renderPlotly({
     
-    #input <- list(var_covid = "obitos", agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_quadradinhos = aux[1:15,input$agrup_covid])
+    #input <- list(var_covid = "acompanhamento", tipo_covid = "_taxa",agrup_covid = "municipio", filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_quadradinhos = aux[1:15,input$agrup_covid])
     
     var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)
@@ -752,69 +749,202 @@ server <- function(input, output) {
         summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var))) %>%
         mutate(frequencia = !!var) %>%
         arrange(data_confirmacao)
-    } else {
+      
+      data_minima <- aux %>%
+        group_by(!!var2) %>%
+        summarise(minimo = min(data_confirmacao)) %>%
+        arrange(minimo) %>%
+        select(minimo) %>%
+        as.list()
+      
+      n_days <- max(aux$data_confirmacao)-data_minima$minimo
+      soma_dias <- pmap(list(rep(0,length(n_days)),n_days), seq)
+    } else if(input$var_covid %in% c("obitos","obitos_taxa","recuperados","recuperados_taxa")) {
       aux <- dados_covid_rs %>%
         filter(!!var2 %in% input$filtro_quadradinhos) %>%
-        mutate(obitos = ifelse(evolucao == "OBITO", 1, 0)) %>% 
+        mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
+               recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
         group_by(data_evolucao,!!var2) %>%
-        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                  recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
         filter(!is.na(data_evolucao)) %>%
         mutate(frequencia = !!var) %>%
         ungroup() %>%
         mutate(data_confirmacao = data_evolucao) %>%
         select(-data_evolucao) %>%
         arrange(data_confirmacao)
-    }
-    data_minima <- aux %>%
-      group_by(!!var2) %>%
-      summarise(minimo = min(data_confirmacao)) %>%
-      arrange(minimo) %>%
-      select(minimo) %>%
-      as.list()
-    
-    n_days <- max(aux$data_confirmacao)-data_minima$minimo
-    soma_dias <- pmap(list(rep(0,length(n_days)),n_days), seq)
-    
-    aux <- as.data.frame(aux)
-    
-    dias <- list()
-    dias_faltantes <- list()
-    for(i in 1:length(n_days)) {
-      dias[[i]] <- data_minima$minimo[[i]]+soma_dias[[i]]
-      dias_faltantes[[i]] <- dias[[i]][!(dias[[i]] %in% aux[aux[,input$agrup_covid]==unique(aux[,input$agrup_covid])[[i]],"data_confirmacao"])]
-    }
-    
-    
-    if(input$agrup_covid=="municipio") {
-      aux2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes)),
-                     municipio = rep(unique(aux[,input$agrup_covid]),unlist(map(dias_faltantes,length))),
-                     frequencia = 0)
+      
+      data_minima <- aux %>%
+        group_by(!!var2) %>%
+        summarise(minimo = min(data_confirmacao)) %>%
+        arrange(minimo) %>%
+        select(minimo) %>%
+        as.list()
+      
+      n_days <- max(aux$data_confirmacao)-data_minima$minimo
+      soma_dias <- pmap(list(rep(0,length(n_days)),n_days), seq)
     } else {
-      aux2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes)),
-                     regiao_covid = rep(unique(aux[,input$agrup_covid]),unlist(map(dias_faltantes,length))),
-                     frequencia = 0)
+      aux <- dados_covid_rs %>%
+        filter(!!var2 %in% input$filtro_quadradinhos) %>%
+        mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
+               acompanhamento = ifelse(is.na(evolucao), 0, 1),
+               recuperados = ifelse(evolucao == "CURA", 1, 0))
+      
+      negativos <- aux %>%
+        group_by(data_evolucao,!!var2) %>%
+        filter(!is.na(data_evolucao)) %>%
+        summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)),
+                  recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
+        mutate(negativos = !!rlang::sym(str_c("recuperados",input$tipo_covid))+!!rlang::sym(str_c("obitos",input$tipo_covid))) %>%
+        mutate(data_confirmacao = data_evolucao) %>%
+        select(-data_evolucao)
+      
+      acomp <- aux %>%
+        group_by(data_sintomas,!!var2) %>%
+        summarise(acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
+        mutate(frequencia = !!rlang::sym(str_c("acompanhamento",input$tipo_covid))) %>%
+        mutate(data_confirmacao = data_sintomas) %>%
+        select(-data_sintomas)
+      
+      data_minima <- aux %>%
+        group_by(!!var2) %>%
+        summarise(minimo = min(data_confirmacao, data_sintomas)) %>%
+        arrange(minimo) %>%
+        select(minimo) %>%
+        as.list()
+      
+      n_days <- max(aux$data_confirmacao,aux$data_evolucao,aux$data_sintomas, na.rm = T)-data_minima$minimo
+      soma_dias <- pmap(list(rep(0,length(n_days)),n_days), seq)
     }
-    
-    aux <- bind_rows(aux,aux2) %>%
-      arrange(data_confirmacao)
-    
-    aux$acumulado <- aux$frequencia
-    
-    for(i in unique(aux[,input$agrup_covid])) {
-      indices <- which(aux[,input$agrup_covid]==i)
-      for(j in indices[2:length(indices)]) {
-        aux$acumulado[j] <- aux$acumulado[indices[which(indices==j)-1]] + aux$frequencia[j]
+
+    if(input$var_covid != "acompanhamento") {
+      
+      aux <- as.data.frame(aux)
+      
+      dias <- list()
+      dias_faltantes <- list()
+      for(i in 1:length(n_days)) {
+        dias[[i]] <- data_minima$minimo[[i]]+soma_dias[[i]]
+        dias_faltantes[[i]] <- dias[[i]][!(dias[[i]] %in% aux[aux[,input$agrup_covid]==unique(aux[,input$agrup_covid])[[i]],"data_confirmacao"])]
       }
+      
+      
+      if(input$agrup_covid=="municipio") {
+        aux2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes)),
+                       municipio = rep(unique(aux[,input$agrup_covid]),unlist(map(dias_faltantes,length))),
+                       frequencia = 0)
+      } else {
+        aux2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes)),
+                       regiao_covid = rep(unique(aux[,input$agrup_covid]),unlist(map(dias_faltantes,length))),
+                       frequencia = 0)
+      }
+      
+      aux <- bind_rows(aux,aux2) %>%
+        arrange(data_confirmacao)
+      
+      aux$acumulado <- aux$frequencia
+      
+      for(i in unique(aux[,input$agrup_covid])) {
+        indices <- which(aux[,input$agrup_covid]==i)
+        for(j in indices[2:length(indices)]) {
+          aux$acumulado[j] <- aux$acumulado[indices[which(indices==j)-1]] + aux$frequencia[j]
+        }
+      }
+      
+      p <- ggplot(aux, aes(x = data_confirmacao, y = reorder(!!var2,frequencia, FUN = sum), fill = acumulado, text = paste(!!var2,paste0(str_c(input$var_covid,input$tipo_covid)," ",round(acumulado,0)),sep = "\n"))) +
+        geom_tile() +
+        labs(y = input$agrup_covid) +
+        scale_fill_gradientn(trans = "sqrt",name = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colours = brewer.pal(9,opcoes[[str_c(input$var_covid,input$tipo_covid)]][["paleta"]])) +
+        scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+        theme_tufte(base_family="Helvetica")
+      
+      ggplotly(p, tooltip = c("text","x")) %>%
+        layout(
+          annotations = list(
+            list(x = -0.05, y = 1.03, text ="*Dados referentes à data de 'confirmação', e não 'notificação', portanto dados antigos são frequentemente adicionados",
+                 showarrow = F, xref='paper', yref='paper', 
+                 xanchor='left', yanchor='auto', xshift=0, yshift=0,
+                 font=list(size=10, color="gray"))
+          )
+        )
+      
+    } else {
+      
+      aux <- as.data.frame(aux)
+      negativos <- as.data.frame(negativos)
+      acomp <- as.data.frame(acomp)
+      
+      
+      dias <- list()
+      dias_faltantes_neg <- list()
+      dias_faltantes_acomp <- list()
+      
+      for(i in 1:length(n_days)) {
+        dias[[i]] <- data_minima$minimo[[i]]+soma_dias[[i]]
+      }
+      
+      for(i in 1:length(unique(acomp[,input$agrup_covid]))) {
+        dias_faltantes_acomp[[i]] <- dias[[i]][!(dias[[i]] %in% acomp[acomp[,input$agrup_covid]==unique(acomp[,input$agrup_covid])[[i]],"data_confirmacao"])]
+      }
+      for(i in 1:length(unique(negativos[,input$agrup_covid]))) {
+        dias_faltantes_neg[[i]] <- dias[[i]][!(dias[[i]] %in% negativos[negativos[,input$agrup_covid]==unique(negativos[,input$agrup_covid])[[i]],"data_confirmacao"])]
+      }
+      
+      
+      if(input$agrup_covid=="municipio") {
+        negativos2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes_neg)),
+                       municipio = rep(unique(negativos[,input$agrup_covid]),unlist(map(dias_faltantes_neg,length))),
+                       negativos = 0)
+        acomp2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes_acomp)),
+                             municipio = rep(unique(acomp[,input$agrup_covid]),unlist(map(dias_faltantes_acomp,length))),
+                             frequencia = 0)
+        
+      } else {
+        negativos2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes_neg)),
+                             regiao_covid = rep(unique(negativos[,input$agrup_covid]),unlist(map(dias_faltantes_neg,length))),
+                             negativos = 0)
+        acomp2 <- tibble(data_confirmacao = as_date(unlist(dias_faltantes_acomp)),
+                         regiao_covid = rep(unique(acomp[,input$agrup_covid]),unlist(map(dias_faltantes_acomp,length))),
+                         frequencia = 0)
+      }
+      
+      negativos <- bind_rows(negativos,negativos2) %>%
+        arrange(data_confirmacao)
+      
+      acomp <- bind_rows(acomp,acomp2) %>%
+        arrange(data_confirmacao) %>%
+        left_join(negativos, by = c(input$agrup_covid,"data_confirmacao")) %>%
+        mutate(negativos = ifelse(is.na(negativos),0,negativos)) %>%
+        mutate(frequencia = frequencia-negativos)
+      
+      acomp$acumulado <- acomp$frequencia
+      
+      for(i in unique(acomp[,input$agrup_covid])) {
+        indices <- which(acomp[,input$agrup_covid]==i)
+        for(j in indices[2:length(indices)]) {
+          acomp$acumulado[j] <- acomp$acumulado[indices[which(indices==j)-1]] + acomp$frequencia[j]
+        }
+      }
+      
+      p <- ggplot(acomp, aes(x = data_confirmacao, y = reorder(!!var2,frequencia, FUN = sum), fill = acumulado, text = paste(!!var2,paste0(str_c(input$var_covid,input$tipo_covid)," ",round(acumulado,0)),sep = "\n"))) +
+        geom_tile() +
+        labs(y = input$agrup_covid, x = "Data de início dos sintomas") +
+        scale_fill_gradientn(trans = "sqrt",name = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colours = brewer.pal(9,opcoes[[str_c(input$var_covid,input$tipo_covid)]][["paleta"]])) +
+        scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+        theme_tufte(base_family="Helvetica")
+      
+      ggplotly(p, tooltip = c("text","x")) %>%
+        layout(
+          annotations = list(
+            list(x =-0.05, y = 1.03, text = "*Dados referentes à data de início dos sintomas, portanto dados mais antigos são frequentemente adicionados", 
+                 showarrow = F, xref='paper', yref='paper', 
+                 xanchor='left', yanchor='auto', xshift=0, yshift=0,
+                 font=list(size=10, color="gray"))
+          )
+        )
+      
     }
     
-    p <- ggplot(aux, aes(x = data_confirmacao, y = reorder(!!var2,frequencia, FUN = sum), fill = acumulado, text = paste(!!var2,paste0(str_c(input$var_covid,input$tipo_covid)," ",round(acumulado,0)),sep = "\n"))) +
-      geom_tile() +
-      labs(y = input$agrup_covid) +
-      scale_fill_gradientn(trans = "sqrt",name = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colours = brewer.pal(9,opcoes[[str_c(input$var_covid,input$tipo_covid)]][["paleta"]])) +
-      scale_x_date(date_breaks = "1 month", date_labels = "%b") +
-      theme_tufte(base_family="Helvetica")
-    
-    ggplotly(p, tooltip = c("text","x"))
     
   })
   
