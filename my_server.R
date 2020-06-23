@@ -67,7 +67,7 @@ server <- function(input, output) {
   output$box_recu <- renderValueBox({
     aux <- dados_covid_rs %>%
       filter(regiao_covid %in% input$filtro_covid) %>%
-      filter(evolucao == "CURA") %>%
+      filter(evolucao == "RECUPERADO") %>%
       group_by(regiao_covid) %>%
       summarise(recuperados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
@@ -182,7 +182,7 @@ server <- function(input, output) {
       filter(regiao_covid %in% input$filtro_covid) %>%
       mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
              acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
-             recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+             recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
       group_by(!!var2) %>%
       summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var)),
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
@@ -212,7 +212,7 @@ server <- function(input, output) {
       filter(regiao_covid %in% input$filtro_covid) %>%
       mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
              acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
-             recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+             recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
       group_by(!!var2) %>%
       summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var)),
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
@@ -330,7 +330,7 @@ server <- function(input, output) {
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_covid) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
-               recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+               recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
         group_by(data_evolucao) %>%
         summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
                   recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
@@ -348,7 +348,7 @@ server <- function(input, output) {
         filter(regiao_covid %in% input$filtro_covid) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
                acompanhamento = ifelse(is.na(evolucao), 0, 1),
-               recuperados = ifelse(evolucao == "CURA", 1, 0))
+               recuperados = ifelse(evolucao == "RECUPERADO", 1, 0))
       negativos <- aux %>%
         group_by(data_evolucao) %>%
         filter(!is.na(data_evolucao)) %>%
@@ -533,7 +533,7 @@ server <- function(input, output) {
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_covid) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
-               recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+               recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
         group_by(semana_epidemiologica_evolucao) %>%
         summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/pop,
                   recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/pop) %>%
@@ -552,7 +552,7 @@ server <- function(input, output) {
         filter(regiao_covid %in% input$filtro_covid) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
                acompanhamento = ifelse(is.na(evolucao), 0, 1),
-               recuperados = ifelse(evolucao == "CURA", 1, 0))
+               recuperados = ifelse(evolucao == "RECUPERADO", 1, 0))
       negativos <- aux %>%
         group_by(semana_epidemiologica_evolucao) %>%
         filter(!is.na(semana_epidemiologica_evolucao)) %>%
@@ -707,7 +707,7 @@ server <- function(input, output) {
       filter(regiao_covid %in% input$filtro_covid) %>%
       mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
              acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
-             recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+             recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
       group_by(!!var2) %>%
       summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(!!pop_var)),
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
@@ -763,7 +763,7 @@ server <- function(input, output) {
       aux <- dados_covid_rs %>%
         filter(!!var2 %in% input$filtro_quadradinhos) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
-               recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+               recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
         group_by(data_evolucao,!!var2) %>%
         summarise(obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)),
                   recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var))) %>%
@@ -788,7 +788,7 @@ server <- function(input, output) {
         filter(!!var2 %in% input$filtro_quadradinhos) %>%
         mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
                acompanhamento = ifelse(is.na(evolucao), 0, 1),
-               recuperados = ifelse(evolucao == "CURA", 1, 0))
+               recuperados = ifelse(evolucao == "RECUPERADO", 1, 0))
       
       negativos <- aux %>%
         group_by(data_evolucao,!!var2) %>%

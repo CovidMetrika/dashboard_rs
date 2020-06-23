@@ -69,7 +69,7 @@ names(dados_ses) <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid",
                       "sexo","faixa_etaria","tipo_teste",
                       "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao",
                       "sintoma_febre","sintoma_tosse",
-                      "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades")
+                      "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades","data_inclusao_obito","data_evolucao_estimada")
 
 dados_covid_rs <- dados_ses %>%
   mutate(data_confirmacao = as_date(data_confirmacao, format = "%d/%m/%y"),
@@ -112,7 +112,7 @@ dados_covid_rs <- dados_covid_rs %>%
 # adicionando as datas de recuperação para os casos não hospitalizados e sem data
 
 dados_covid_rs <- dados_covid_rs %>%
-  mutate(data_evolucao = ifelse(evolucao == "CURA", ifelse(hospitalizacao == "Nao", ifelse(is.na(data_evolucao),data_sintomas+days(14),data_evolucao),data_evolucao),data_evolucao)) %>%
+  mutate(data_evolucao = ifelse(evolucao == "RECUPERADO", ifelse(hospitalizacao == "Nao", ifelse(is.na(data_evolucao),data_sintomas+days(14),data_evolucao),data_evolucao),data_evolucao)) %>%
   mutate(data_evolucao = as_date(data_evolucao))
 
 # fazendo um banco de join para o mapa do rs
@@ -120,7 +120,7 @@ dados_covid_rs <- dados_covid_rs %>%
 dados_covid_join <- dados_covid_rs %>%
   mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
-         recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+         recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
   group_by(municipio, codigo_ibge) %>%
   summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_municipio)),
             obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_municipio)), 
@@ -133,7 +133,7 @@ dados_covid_join <- dados_covid_rs %>%
 dados_covid_join_reg <- dados_covid_rs %>%
   mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
          acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
-         recuperados = ifelse(evolucao == "CURA", 1, 0)) %>% 
+         recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
   group_by(regiao_covid, codigo_regiao_covid) %>%
   summarise(confirmados = n(), confirmados_taxa = n()*100000/as.numeric(first(populacao_estimada_regiao_covid)),
             obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(populacao_estimada_regiao_covid)), 
@@ -191,7 +191,7 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_13_06.csv","leitos_dados_ses_14_06.csv","leitos_dados_ses_15_06.csv",
                          "leitos_dados_ses_16_06.csv","leitos_dados_ses_17_06.csv","leitos_dados_ses_18_06.csv",
                          "leitos_dados_ses_19_06.csv","leitos_dados_ses_20_06.csv","leitos_dados_ses_21_06.csv",
-                         "leitos_dados_ses_22_06.csv")
+                         "leitos_dados_ses_22_06.csv","leitos_dados_ses_23_06.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
