@@ -133,6 +133,14 @@ body <- dashboardBody(
                   width = 12,
                   uiOutput("ui_filtro_quadradinhos")
                 ),
+                # column(
+                #   width = 12,
+                #   uiOutput("ui_faixa_etaria_covid")
+                # ),
+                # column(
+                #   width = 12,
+                #   uiOutput("ui_sexo_covid")
+                # ),
                 column(
                   width = 12,
                   box(

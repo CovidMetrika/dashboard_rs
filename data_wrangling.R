@@ -192,7 +192,7 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_16_06.csv","leitos_dados_ses_17_06.csv","leitos_dados_ses_18_06.csv",
                          "leitos_dados_ses_19_06.csv","leitos_dados_ses_20_06.csv","leitos_dados_ses_21_06.csv",
                          "leitos_dados_ses_22_06.csv","leitos_dados_ses_23_06.csv","leitos_dados_ses_24_06.csv",
-                         "leitos_dados_ses_25_06.csv","leitos_dados_ses_26_06.csv")
+                         "leitos_dados_ses_25_06.csv","leitos_dados_ses_26_06.csv","leitos_dados_ses_27_06.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
@@ -339,10 +339,25 @@ dados_covid_rs <- dados_covid_rs %>%
 leitos_uti <- leitos_uti %>%
   left_join(semana, by = c("data_atualizacao" = "dia"))
 
+
+# lendo banco de dados com populações por faixa etária e sexo no RS
+
+populacao_fee <- read_excel("dados/FEE2017.xlsx") %>%
+  mutate(municipio = str_to_title(municipio))
+
+populacao_fee$faixa[which(populacao_fee$faixa %in% c("0 a 04"))] <- "00 a 04"
+populacao_fee$faixa[which(populacao_fee$faixa %in% c("5 a 09"))] <- "05 a 09"
+
+# arrumando dois municipios com nomes errados
+
+populacao_fee[populacao_fee$municipio=="Westfalia","municipio"] <- "Westfália"
+populacao_fee[populacao_fee$municipio=="Chiapeta","municipio"] <- "Chiapetta"
+
+
 # deixando só os objetos essenciais
 
 rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","dados_mapa_rs_reg",
-                       "dados_mapa_rs","dados_covid_rs","pop_regiao")))
+                       "dados_mapa_rs","dados_covid_rs","pop_regiao","populacao_fee")))
 
 #------------------------------------------------ 
 
@@ -351,4 +366,10 @@ rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","d
 # variavél sexo possui um escrito 'femininio'
 
 dados_covid_rs$sexo <- ifelse(dados_covid_rs$sexo == 'Femininio', 'Feminino', dados_covid_rs$sexo)
+
+# arrumando a faixa etária pra ficar de acordo com dados da FEE
+
+dados_covid_rs <- dados_covid_rs %>%
+  mutate(faixa_etaria = ifelse(faixa_etaria %in% c("<1","01 a 04"), "00 a 04", faixa_etaria))
+
 
