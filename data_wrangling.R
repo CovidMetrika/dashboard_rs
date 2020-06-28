@@ -343,10 +343,12 @@ leitos_uti <- leitos_uti %>%
 # lendo banco de dados com populações por faixa etária e sexo no RS
 
 populacao_fee <- read_excel("dados/FEE2017.xlsx") %>%
-  mutate(municipio = str_to_title(municipio))
+  mutate(municipio = str_to_title(municipio)) %>%
+  mutate(regiao_covid = reg_covid, faixa_etaria = faixa) %>%
+  select(-c(faixa,reg_covid))
 
-populacao_fee$faixa[which(populacao_fee$faixa %in% c("0 a 04"))] <- "00 a 04"
-populacao_fee$faixa[which(populacao_fee$faixa %in% c("5 a 09"))] <- "05 a 09"
+populacao_fee$faixa_etaria[which(populacao_fee$faixa_etaria %in% c("0 a 04"))] <- "00 a 04"
+populacao_fee$faixa_etaria[which(populacao_fee$faixa_etaria %in% c("5 a 09"))] <- "05 a 09"
 
 # arrumando dois municipios com nomes errados
 

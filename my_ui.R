@@ -54,7 +54,7 @@ body <- dashboardBody(
                     #para isso
                     #    ícone no canto superior direito há um ícone em que ")
                     # h5(em(data_hora_atual))
-                    h3("O ícone no canto superior direito seleciona quais 
+                    h4("O ícone no canto superior direito seleciona quais 
                     as regiões covid do RS serão apresentadas")
                   ),
                   column(
@@ -133,14 +133,14 @@ body <- dashboardBody(
                   width = 12,
                   uiOutput("ui_filtro_quadradinhos")
                 ),
-                # column(
-                #   width = 12,
-                #   uiOutput("ui_faixa_etaria_covid")
-                # ),
-                # column(
-                #   width = 12,
-                #   uiOutput("ui_sexo_covid")
-                # ),
+                column(
+                  width = 6,
+                  uiOutput("ui_faixa_etaria_covid")
+                ),
+                column(
+                  width = 6,
+                  uiOutput("ui_sexo_covid")
+                ),
                 column(
                   width = 12,
                   box(

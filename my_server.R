@@ -17,208 +17,108 @@ opcoes <- list(
 
 # função que cria os gráficos de faixa etária e sexo
 
-# gg <- function(var_covid, agrup_covid, tipo_covid, tipo_var, formato, filtro){
-#   
-#   # comando abaixo server para testes
-#   #var_covid = "confirmados";agrup_covid = "municipio";tipo_covid = "";tipo_var = "faixa_etaria";formato = NULL;filtro = unique(dados_covid_rs$municipio)[1:10]
-#   
-#   var <- rlang::sym(str_c(var_covid,tipo_covid)) # variável covid
-#   var2 <- rlang::sym(agrup_covid) # variável de agrupamento
-#   var3 <- rlang::sym(tipo_var) # sexo ou idade
-#   pop_var <- rlang::sym(str_c("populacao_estimada_",input$agrup_covid)) # variável de população
-#   
-#   aux_pop <- populaca
-#   
-#   aux <- dados_covid_rs %>%
-#     left_join(populacao_fee[,c("municipio","faixa","sexo","populacao")], by = c("municipio","faixa_etaria" = "faixa","sexo")) %>%
-#     mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
-#            acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
-#            recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>% 
-#     group_by(!!var2,!!var3) %>%
-#     summarise(confirmados = n(), confirmados_taxa = n()*100000/first(populacao),
-#               obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/first(populacao), 
-#               acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/first(populacao),
-#               recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/first(populacao),
-#               populacao = first(populacao)) %>%
-#     filter(!!var2 %in% filtro)
-#   
-#   
-#   ggplot(aux, aes(x = !!var, y = !!var2)) +
-#     geom_col(aes(fill = !!var3), 
-#              position = position_stack(reverse = TRUE)) +
-#     theme(legend.position = "top") + 
-#     labs(y = NULL, 
-#          x = paste0(options_dados[which(var_covid == options_dados)]), 
-#          fill = paste0(tools::toTitleCase(tipo_var), ':')) + 
-#     theme(legend.position = 'bottom')
-#   
-#   
-# 
-# 
-# 
-#   # agregar os dados: 
-#   df <- data.frame(table(temp$regiao, temp$variavel, temp$evolucao))
-#   names(df) <- c(names(temp), 'Contagem')
-#   
-#   # chamar o banco com as populações 
-#   pops <- readxl::read_excel(here::here('dados', 'FEE2017.xlsx'))
-#   
-#   # selecionar so os dados necessarios:
-#   if(tipo_var != options_var[1]){
-#     pops <- pops %>% 
-#       select(-sexo)
-#     
-#     pops$faixa[which(pops$faixa %in% c("0 a 04"))] <- "00 a 04"
-#     pops$faixa[which(pops$faixa %in% c("5 a 09"))] <- "05 a 09"
-#     
-#   } else {
-#     pops <- pops %>% 
-#       select(-faixa)
-#   }
-#   
-#   names(pops)[4] <- 'variavel'
-#   
-#   # selecionar só a regiao correta:
-#   if(agrup_covid != options_cluster[1]){
-#     pops <- pops %>% 
-#       select(-municipio) %>%
-#       select(populacao, variavel, reg_covid)
-#     
-#   } else {
-#     pops <- pops %>% 
-#       select(-reg_covid) %>%
-#       select(populacao, variavel, municipio)
-#   }
-#   
-#   
-#   names(pops)[3] <- 'regiao'
-#   
-#   # eu tenho o banco de pop pelas duas variaveis, aqui eu junto porque 
-#   # eu to trabalhando só com uma delas:
-#   
-#   pops <- pops %>% 
-#     group_by(regiao, variavel) %>%
-#     summarise(populacao = sum(populacao))
-#   
-#   
-#   # arrumar o banco de dados para ter todas as possíveis combinações 
-#   # mesmo que isso seja zero. 
-#   
-#   aux <- expand.grid(regiao = unique(pops$regiao), 
-#                      variavel = unique(pops$variavel), 
-#                      evolucao = as.vector(na.omit(unique(dados_covid_rs$evolucao)))
-#   )
-#   
-#   # acima não to considerando os casos em que a evolução são casos NA, se quiser
-#   # considerar a gente pode retirar o as.vector e o na.omit
-#   
-#   # talvez deixar especificado no banco de dados que existem um número x de 
-#   # caso que não estão sendo considerados por causa que não sabemos a evolução 
-#   
-#   # pegando a populacao e juntando no banco com as contagens:
-#   df <- aux %>% 
-#     left_join(df, by = c("regiao", "variavel", "evolucao")) %>% 
-#     mutate(Contagem = replace_na(Contagem, 0))
-#   
-#   df <- df %>%
-#     left_join(pops, by = c("regiao", "variavel")) %>% 
-#     mutate(contagem = Contagem) %>%
-#     select(regiao, variavel, evolucao, populacao, contagem)
-#   
-#   # mudar a variável de evolução para colunas, pra poder fazer os gráficos 
-#   # separado pras variaveis (4)
-#   
-#   df$contagem <- as.numeric(df$contagem)
-#   
-#   df <- df %>% 
-#     tidyr::spread(key = evolucao, value = contagem)
-#   
-#   # juntar CURA + EM ACOMPANHAMENTO + OBITOS = CASOS CONFIRMADOS 
-#   
-#   names(df)[4:6] <- c('cura', 'acompanhamento', 'mortes')
-#   
-#   dados <- df %>% 
-#     mutate(casos = cura + acompanhamento + mortes) %>% 
-#     mutate(taxa_casos = casos/populacao*100000) %>% 
-#     mutate(taxa_cura = cura/populacao*100000) %>% 
-#     mutate(taxa_acomp = acompanhamento/populacao*100000) %>% 
-#     mutate(taxa_morte = mortes/populacao*100000) %>% 
-#     mutate(letalidade = mortes/casos*100) %>% 
-#     select(regiao, variavel, casos, taxa_casos, cura, taxa_cura, acompanhamento, taxa_acomp, 
-#            mortes, taxa_morte, letalidade)
-#   
-#   # deixando os dados ajustados: 
-#   dados$taxa_cura <- round(dados$taxa_cura, 3)
-#   dados$taxa_acomp <- round(dados$taxa_acomp, 3)
-#   dados$taxa_casos <- round(dados$taxa_casos, 3)
-#   dados$taxa_morte <- round(dados$taxa_morte, 3)
-#   dados$letalidade <- round(dados$letalidade, 3)
-#   
-#   # agora que o banco de dados tá pronto 
-#   # agora faz o filtro pra escolher qual variável quer enxergar 
-#   
-#   if(var_covid == options_dados[1]){
-#     df <- dados %>%
-#       select(regiao, variavel, casos, taxa_casos)
-#   } else { 
-#     if(var_covid == options_dados[2]) {
-#       df <- dados %>%
-#         select(regiao, variavel, mortes, taxa_morte)
-#     } else {
-#       if(var_covid == options_dados[3]) { 
-#         df <- dados %>%
-#           select(regiao, variavel, cura, taxa_cura)
-#       }
-#       df <- dados %>%
-#         select(regiao, variavel, acompanhamento, taxa_acomp)
-#     }
-#   }
-#   
-#   df <- df %>% 
-#     mutate(regiao = tools::toTitleCase(tolower(df$regiao)))
-#   
-#   names(df) <- c('regiao', 'variavel', 'abs', 'taxa')
-#   
-#   df$variavel <- factor(df$variavel, levels = unique(df$variavel))
-#   df$regiao <- factor(df$regiao, levels = unique(df$regiao))
-#   df <- df[with(df, order(regiao, variavel)),]
-#   
-#   
-#   plot_abs <- ggplot(df, aes(x = abs, y = regiao)) +
-#     geom_col(aes(fill = variavel), 
-#              position = position_stack(reverse = TRUE)) +
-#     theme(legend.position = "top") + 
-#     labs(y = NULL, 
-#          x = paste0(options_dados[which(var_covid == options_dados)]), 
-#          fill = paste0(tools::toTitleCase(tipo_var), ':')) + 
-#     theme(legend.position = 'bottom')
-#   
-#   plot_tx <- ggplot(df, aes(x = taxa, y = regiao)) +
-#     geom_col(aes(fill = variavel), 
-#              position = position_stack(reverse = TRUE)) +
-#     theme(legend.position = "top") + 
-#     labs(y = NULL, 
-#          x = paste0(options_dados[which(var_covid == options_dados)], '*'), 
-#          fill = paste0(tools::toTitleCase(tipo_var), ':'), 
-#          caption = '* por 100.000 habitantes') + 
-#     theme(legend.position = 'bottom')
-#   
-#   table <- df
-#   names(table) <- c(agrup_covid, tipo_var , var_covid, paste0('Taxa de ', var_covid, ' (Por 100 mil hab.)'))
-#   
-#   results <- if(formato == options_format[1]){
-#     plot_abs
-#   } else {
-#     if(formato == options_format[2]){
-#       plot_tx
-#     } else {
-#       table
-#     }
-#   }
-#   
-#   print(results)
-#   
-# } # final da função
+gg <- function(var_covid, agrup_covid = "municipio", tipo_covid, tipo_var, formato = NA, filtro){
+
+  # comando abaixo server para testes
+  #var_covid = "confirmados";agrup_covid = "municipio";tipo_covid = "_taxa";tipo_var = "faixa_etaria";formato = "tabela";filtro = unique(dados_covid_rs$municipio)[1:10]
+
+  var <- rlang::sym(str_c(var_covid,tipo_covid)) # variável covid
+  var2 <- rlang::sym(agrup_covid) # variável de agrupamento
+  var3 <- rlang::sym(tipo_var) # sexo ou idade
+  
+  # caption embaixo do plot caso se escolha taxa
+  if(tipo_var == "faixa_etaria") {
+    caption <- "* Taxa por 100mil habitantes discriminada por faixa etária"
+    paleta <- brewer.pal(11, "RdYlBu")
+  } else {
+    caption <- "* Taxa por 100mil habitantes discriminada por sexo"
+    paleta <- brewer.pal(11, "RdYlBu")[c(2,10)]
+  }
+  
+  
+  if(formato %in% c("tabela",NA)){
+    
+    aux_pop <- populacao_fee %>%
+      group_by(!!var2,!!var3) %>%
+      summarise(populacao = sum(populacao))
+    
+    aux <- dados_covid_rs %>%
+      left_join(aux_pop[,c(agrup_covid,tipo_var,"populacao")], by = c(agrup_covid,tipo_var)) %>%
+      mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
+             acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
+             recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>%
+      group_by(!!var2,!!var3) %>%
+      summarise(confirmados = n(), confirmados_taxa = n()*100000/first(populacao),
+                obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/first(populacao),
+                acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/first(populacao),
+                recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/first(populacao),
+                populacao = first(populacao)) %>%
+      filter(!!var2 %in% filtro)
+    
+    if(is.na(formato)) {
+      
+      p <- ggplot(aux, aes(x = !!var, y = reorder(!!var2,!!var,FUN = sum))) +
+        geom_col(aes(fill = !!var3),
+                 position = position_stack(reverse = TRUE)) +
+        scale_fill_manual(values = paleta) +
+        labs(y = NULL,
+             x = opcoes[[str_c(var_covid,tipo_covid)]][["texto"]])
+      
+      ggplotly(p) %>%
+        layout(annotations = list(
+          list(x = -0.1, y = 1.03, text = caption, 
+               showarrow = F, xref='paper', yref='paper', 
+               xanchor='left', yanchor='auto', xshift=0, yshift=0,
+               font=list(size=10, color="gray"))
+        )
+        )
+    } else {
+      datatable(aux,
+        rownames = F,
+        filter = "top",
+        class = "compact",
+        options = list(
+          scrollX = T
+        )
+      )
+    }
+    
+  } else {
+    
+    aux_pop <- populacao_fee %>%
+      group_by(!!var3) %>%
+      summarise(populacao = sum(populacao))
+    
+    aux <- dados_covid_rs %>%
+      left_join(aux_pop[,c(tipo_var,"populacao")], by = c(tipo_var)) %>%
+      mutate(obitos = ifelse(evolucao == "OBITO", 1, 0),
+             acompanhamento = ifelse(evolucao == "EM ACOMPANHAMENTO", 1, 0),
+             recuperados = ifelse(evolucao == "RECUPERADO", 1, 0)) %>%
+      group_by(!!var3) %>%
+      summarise(confirmados = n(), confirmados_taxa = n()*100000/first(populacao),
+                obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/first(populacao),
+                acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/first(populacao),
+                recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/first(populacao),
+                populacao = first(populacao))
+    
+    p <- ggplot(aux, aes(x = !!var, y = !!var3)) +
+      geom_col(aes(fill = !!var3)) +
+      scale_fill_manual(values = paleta) +
+      labs(y = NULL,
+           x = opcoes[[str_c(var_covid,tipo_covid)]][["texto"]])
+    
+    ggplotly(p) %>%
+      layout(showlegend = F,
+             annotations = list(
+        list(x = -0.1, y = 1.03, text = caption, 
+             showarrow = F, xref='paper', yref='paper', 
+             xanchor='left', yanchor='auto', xshift=0, yshift=0,
+             font=list(size=10, color="gray"))
+      )
+      )
+    
+  }
+} # final da função
 
 
 server <- function(input, output) {
@@ -394,7 +294,7 @@ server <- function(input, output) {
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
                 acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
                 recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
-                populacao = first(!!pop_var)) %>%
+                populacao = as.numeric(first(!!pop_var))) %>%
       arrange(desc(!!var)) %>%
       slice_head(n = 25) %>%
       ggplot(aes(x = reorder(!!var2, !!var), y = !!var, text = paste(!!var2,paste0(str_c(input$var_covid,input$tipo_covid)," ",round(!!var,0)),paste0(text_tooltip[1]," ",round(!!outra_var,0)),paste0(text_tooltip[2]," ",round(!!outra_var2,0)),paste0(text_tooltip[3]," ",round(!!outra_var3,0)),paste0(text_tooltip[4]," ",round(!!outra_var4,0)),paste0(text_tooltip[5]," ",round(!!outra_var5,0)),paste0(text_tooltip[6]," ",round(!!outra_var6,0)),paste0(text_tooltip[7]," ",round(!!outra_var7,0)),paste0("populacao ",!!sym("populacao")),sep = "\n"))) +
@@ -424,7 +324,7 @@ server <- function(input, output) {
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
                 acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
                 recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
-                populacao = first(!!pop_var)) %>%
+                populacao = as.numeric(first(!!pop_var))) %>%
       arrange(desc(confirmados)) %>%
       datatable(
         rownames = F,
@@ -919,7 +819,7 @@ server <- function(input, output) {
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
                 acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
                 recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
-                populacao = first(!!pop_var)) %>%
+                populacao = as.numeric(first(!!pop_var))) %>%
       arrange(desc(!!var))
     
     aux <- as.data.frame(aux)
@@ -1171,11 +1071,10 @@ server <- function(input, output) {
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
                 acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
                 recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
-                populacao = first(!!pop_var)) %>%
+                populacao = as.numeric(first(!!pop_var))) %>%
       arrange(desc(!!var))
     
     aux <- as.data.frame(aux)
-    
 
     
     if(input$agrup_covid == "municipio") {
@@ -1203,7 +1102,7 @@ server <- function(input, output) {
                     plotlyOutput("faixa_etaria_estado", height = 500)
            ),
            tabPanel("Tabela",
-                    plotlyOutput("faixa_etaria_tabela", height = 500)
+                    dataTableOutput("faixa_etaria_tabela", height = 500)
            )
     )
   })
@@ -1211,19 +1110,38 @@ server <- function(input, output) {
   # FAIXA_ETARIA_AGRUP
   
   output$faixa_etaria_agrup <- renderPlotly({
-    
+    gg(
+      var_covid = input$var_covid, 
+      agrup_covid = input$agrup_covid, 
+      tipo_covid = input$tipo_covid,
+      tipo_var = "faixa_etaria",
+      filtro = input$filtro_faixa_etaria_covid
+    )
   })
   
   # FAIXA_ETARIA_ESTADO
   
   output$faixa_etaria_estado <- renderPlotly({
-    
+    gg(
+      var_covid = input$var_covid, 
+      tipo_covid = input$tipo_covid,
+      tipo_var = "faixa_etaria",
+      formato = "estado",
+      filtro = input$filtro_faixa_etaria_covid
+    )
   })
   
   # FAIXA_ETARIA_TABELA
   
-  output$faixa_etaria_tabela <- renderPlotly({
-    
+  output$faixa_etaria_tabela <- renderDataTable({
+    gg(
+      var_covid = input$var_covid, 
+      agrup_covid = input$agrup_covid, 
+      tipo_covid = input$tipo_covid,
+      tipo_var = "faixa_etaria",
+      formato = "tabela",
+      filtro = input$filtro_faixa_etaria_covid
+    )
   })
   
   # UI_SEXO_COVID
@@ -1244,7 +1162,7 @@ server <- function(input, output) {
                 obitos = sum(obitos, na.rm = T), obitos_taxa = sum(obitos, na.rm = T)*100000/as.numeric(first(!!pop_var)), 
                 acompanhamento = sum(acompanhamento, na.rm = T), acompanhamento_taxa = sum(acompanhamento, na.rm = T)*100000/as.numeric(first(!!pop_var)),
                 recuperados = sum(recuperados, na.rm = T), recuperados_taxa = sum(recuperados, na.rm = T)*100000/as.numeric(first(!!pop_var)),
-                populacao = first(!!pop_var)) %>%
+                populacao = as.numeric(first(!!pop_var))) %>%
       arrange(desc(!!var))
     
     aux <- as.data.frame(aux)
@@ -1276,7 +1194,7 @@ server <- function(input, output) {
                     plotlyOutput("sexo_estado", height = 500)
            ),
            tabPanel("Tabela",
-                    plotlyOutput("sexo_tabela", height = 500)
+                    dataTableOutput("sexo_tabela", height = 500)
            )
     )
   })
@@ -1284,19 +1202,38 @@ server <- function(input, output) {
   # sexo_AGRUP
   
   output$sexo_agrup <- renderPlotly({
-    
+    gg(
+      var_covid = input$var_covid, 
+      agrup_covid = input$agrup_covid, 
+      tipo_covid = input$tipo_covid,
+      tipo_var = "sexo",
+      filtro = input$filtro_sexo_covid
+    )
   })
   
   # sexo_ESTADO
   
   output$sexo_estado <- renderPlotly({
-    
+    gg(
+      var_covid = input$var_covid, 
+      tipo_covid = input$tipo_covid,
+      tipo_var = "sexo",
+      formato = "estado",
+      filtro = input$filtro_sexo_covid
+    )
   })
   
   # sexo_TABELA
   
-  output$sexo_tabela <- renderPlotly({
-    
+  output$sexo_tabela <- renderDataTable({
+    gg(
+      var_covid = input$var_covid, 
+      agrup_covid = input$agrup_covid, 
+      tipo_covid = input$tipo_covid,
+      tipo_var = "sexo",
+      formato = "tabela",
+      filtro = input$filtro_sexo_covid
+    )
   })
   
   
