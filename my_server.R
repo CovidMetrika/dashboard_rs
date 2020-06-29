@@ -64,14 +64,19 @@ gg <- function(var_covid, agrup_covid = "municipio", tipo_covid, tipo_var, forma
         labs(y = NULL,
              x = opcoes[[str_c(var_covid,tipo_covid)]][["texto"]])
       
-      ggplotly(p) %>%
-        layout(annotations = list(
-          list(x = -0.1, y = 1.03, text = caption, 
-               showarrow = F, xref='paper', yref='paper', 
-               xanchor='left', yanchor='auto', xshift=0, yshift=0,
-               font=list(size=10, color="gray"))
-        )
-        )
+      if(tipo_covid == "_taxa") {
+        ggplotly(p) %>%
+          layout(annotations = list(
+            list(x = -0.1, y = 1.03, text = caption, 
+                 showarrow = F, xref='paper', yref='paper', 
+                 xanchor='left', yanchor='auto', xshift=0, yshift=0,
+                 font=list(size=10, color="gray"))
+          )
+          )
+      } else {
+        ggplotly(p) 
+      }
+      
     } else {
       datatable(aux,
         rownames = F,
@@ -107,15 +112,21 @@ gg <- function(var_covid, agrup_covid = "municipio", tipo_covid, tipo_var, forma
       labs(y = NULL,
            x = opcoes[[str_c(var_covid,tipo_covid)]][["texto"]])
     
-    ggplotly(p) %>%
-      layout(showlegend = F,
-             annotations = list(
-        list(x = -0.1, y = 1.03, text = caption, 
-             showarrow = F, xref='paper', yref='paper', 
-             xanchor='left', yanchor='auto', xshift=0, yshift=0,
-             font=list(size=10, color="gray"))
-      )
-      )
+    if(tipo_covid == "_taxa") {
+      ggplotly(p) %>%
+        layout(showlegend = F,
+               annotations = list(
+                 list(x = -0.1, y = 1.03, text = caption, 
+                      showarrow = F, xref='paper', yref='paper', 
+                      xanchor='left', yanchor='auto', xshift=0, yshift=0,
+                      font=list(size=10, color="gray"))
+               )
+        )
+    } else {
+      ggplotly(p)
+    }
+    
+    
     
   }
 } # final da função
