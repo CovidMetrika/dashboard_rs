@@ -69,7 +69,8 @@ names(dados_ses) <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid",
                       "sexo","faixa_etaria","tipo_teste",
                       "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao",
                       "sintoma_febre","sintoma_tosse",
-                      "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades","data_inclusao_obito","data_evolucao_estimada")
+                      "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades",
+                      "data_inclusao_obito","data_evolucao_estimada","raca_cor")
 
 dados_covid_rs <- dados_ses %>%
   mutate(data_confirmacao = as_date(data_confirmacao, format = "%d/%m/%y"),
@@ -193,7 +194,8 @@ arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.cs
                          "leitos_dados_ses_19_06.csv","leitos_dados_ses_20_06.csv","leitos_dados_ses_21_06.csv",
                          "leitos_dados_ses_22_06.csv","leitos_dados_ses_23_06.csv","leitos_dados_ses_24_06.csv",
                          "leitos_dados_ses_25_06.csv","leitos_dados_ses_26_06.csv","leitos_dados_ses_27_06.csv",
-                         "leitos_dados_ses_28_06.csv","leitos_dados_ses_29_06.csv","leitos_dados_ses_30_06.csv")
+                         "leitos_dados_ses_28_06.csv","leitos_dados_ses_29_06.csv","leitos_dados_ses_30_06.csv",
+                         "leitos_dados_ses_01_07.csv")
 caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
 
 arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
