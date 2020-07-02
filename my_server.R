@@ -1323,7 +1323,7 @@ server <- function(input, output) {
         aux_mapa <- leitos_uti %>%
           filter(!is.na(!!var)) %>%
           filter(regiao_covid %in% input$filtro_leitos) %>%
-          group_by(cnes, LATITUDE, LONGITUDE, hospital) %>%
+          group_by(cnes, latitude, longitude, hospital) %>%
           filter(data_atualizacao == max(data_atualizacao)) %>%
           summarise(var = sum(!!var)) %>%
           filter(var != 0)
@@ -1331,7 +1331,7 @@ server <- function(input, output) {
         aux_mapa <- leitos_uti %>%
           filter(!is.na(!!var)) %>%
           filter(regiao_covid %in% input$filtro_leitos) %>%
-          group_by(cnes, LATITUDE, LONGITUDE, hospital) %>%
+          group_by(cnes, latitude, longitude, hospital) %>%
           filter(data_atualizacao == max(data_atualizacao)) %>%
           summarise(var = ifelse(sum(leitos_total)!=0,sum(leitos_internacoes)/sum(leitos_total),NA))
       }
@@ -1456,7 +1456,7 @@ server <- function(input, output) {
         
         leaflet(aux_mapa) %>%
           addTiles(urlTemplate = "http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", attribution = 'Google') %>%
-          addCircleMarkers(lng = aux_mapa$LONGITUDE, lat = aux_mapa$LATITUDE, radius = calculo_raio,
+          addCircleMarkers(lng = aux_mapa$longitude, lat = aux_mapa$latitude, radius = calculo_raio,
                            color = cor, fillOpacity = 0.5, label = lapply(labs, htmltools::HTML), 
                            labelOptions = labelOptions(interactive = T, textsize = "15px"))
         
@@ -1471,7 +1471,7 @@ server <- function(input, output) {
         
         leaflet(aux_mapa) %>%
           addTiles(urlTemplate = "http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", attribution = 'Google') %>%
-          addCircleMarkers(lng = aux_mapa$LONGITUDE, lat = aux_mapa$LATITUDE, radius = calculo_raio,
+          addCircleMarkers(lng = aux_mapa$longitude, lat = aux_mapa$latitude, radius = calculo_raio,
                            color = cor, fillOpacity = 0.5, label = lapply(labs, htmltools::HTML), 
                            labelOptions = labelOptions(interactive = T, textsize = "15px"))
       }

@@ -48,6 +48,10 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
   left_join(codigos_cidades, by = "municipio") %>% # atribuindo o código
   dplyr::select(-c(municipio))
 
+# lendo arquivo com semana epidemoilógica para adicionar ao banco
+
+semana <- read_csv("dados/semana_epidemio_dia.csv")
+
 # lendo dados da SES-RS
 
 dados_ses <- NULL
@@ -297,24 +301,62 @@ dados_mapa_rs_reg <- mapa_reg_rs %>%
 #          leitos_disponiveis = leitos_total - leitos_internacoes)
 
 
-# NOVO SITE COM NOVA BASE DE DADOS
+# NOVO MÉTODO COM NOVA BASE DE DADOS
 
-# pegando último banco da base antiga para não perder as primeiras atualizações
+# pegando último banco atualizado
 
-base_antiga <- read_csv("dados/leitos/base_antiga/ultima_atualizacao_base_antiga.csv")
+ultima_atualizacao <- read_csv("dados/leitos/nova_base/ultima_atualizacao.csv") %>%
+  mutate(codigo_ibge = as.character(codigo_ibge),
+         codigo_regiao_covid = as.numeric(codigo_regiao_covid)) 
 
-names(base_antiga) <-
+# pegando novos dados
 
-nova_base <- read_csv2("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais",
+new_data <- read_csv2("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais",
                        locale = readr::locale(encoding = "latin1"))
 
-names(nova_base) <-  c("codigo_ibge", "municipio", "lat_mun", "lon_mun", "estado", "crs", "regiao_saude",
+names(new_data) <-  c("codigo_ibge_6_digitos", "municipio", "lat_mun", "lon_mun", "estado", "crs", "regiao_saude",
                        "codigo_macrorregiao_saude", "macrorregiao_saude", "codigo_regiao_covid",
-                       "regiao_covid", "cnes", "estabelcimento_saude", "latitude", "longitude", "data_atualizacao",
+                       "regiao_covid", "cnes", "hospital", "latitude", "longitude", "data_atualizacao",
                        "leitos_uti_adulto","leitos_clinicos_adulto","leitos_uti_pediatrico","respiradores", 
                        "uti_adulto_suspeitos_covid", "uti_adulto_confirmados_covid","uti_pediatrico_suspeitos_covid", "uti_pediatrico_confirmados_covid",
                        "clinico_adulto_suspeitos_covid", "clinico_adulto_confirmados_covid","clinico_pediatrico_suspeitos_covid", "clinico_pediatrico_confirmados_covid",
                        "uti_adulto_respiradores","uti_adulto_internacoes")
+
+# alterando nome de santana do livramento
+
+new_data[new_data$municipio=="Santana do Livramento","municipio"] <- "Sant'ana Do Livramento"
+
+# criando e manipulando variaveis 
+
+new_data <- new_data %>%
+  mutate(municipio = str_to_title(municipio)) %>%
+  left_join(codigos_cidades, by = c("municipio")) %>%
+  mutate(leitos_total = leitos_uti_adulto,
+         leitos_internacoes = uti_adulto_internacoes,
+         leitos_covid = uti_adulto_confirmados_covid,
+         lotacao = ifelse(leitos_uti_adulto != 0,uti_adulto_internacoes/leitos_uti_adulto,NA),
+         leitos_disponiveis = leitos_uti_adulto-uti_adulto_internacoes) %>%
+  mutate(data_atualizacao = as_date(data_atualizacao)) %>%
+  left_join(semana, by = c("data_atualizacao" = "dia")) %>%
+  group_by(cnes) %>%
+  filter(data_atualizacao == max(data_atualizacao)) %>%
+  ungroup() %>%
+  mutate(data_atualizacao == median(data_atualizacao)) %>%
+  select(names(ultima_atualizacao)) %>%
+  select(-hospital) %>%
+  left_join(unique(ultima_atualizacao[,c("hospital","cnes")]), by = "cnes") %>%
+  mutate(codigo_ibge = as.character(codigo_ibge),
+         codigo_regiao_covid = as.numeric(codigo_regiao_covid),
+         latitude = as.numeric(str_c(str_extract(latitude, "^..."),".",str_remove(latitude, "^..."))),
+         longitude = as.numeric(str_c(str_extract(longitude, "^..."),".",str_remove(longitude, "^..."))))
+
+
+leitos_uti <- new_data %>%
+  add_case(ultima_atualizacao) %>%
+  distinct(cnes,data_atualizacao,.keep_all = T)
+
+write_csv(leitos_uti,"dados/leitos/nova_base/ultima_atualizacao.csv")
+
 
 leitos_join_mun <- leitos_uti %>%
   group_by(cnes) %>%
@@ -345,9 +387,8 @@ leitos_mapa_mun_rs <- mapa_rs_shp %>%
 leitos_mapa_reg_rs <- mapa_reg_rs %>%
   left_join(leitos_join_reg, by = "codigo_regiao_covid")
 
-# lendo arquivo com semana epidemoilógica para adicionar ao banco
 
-semana <- read_csv("dados/semana_epidemio_dia.csv")
+# adicionandp semana epidemiológica
 
 dados_covid_rs <- dados_covid_rs %>%
   left_join(semana, by = c("data_confirmacao" = "dia")) %>%
@@ -359,10 +400,6 @@ dados_covid_rs <- dados_covid_rs %>%
   left_join(semana, by = c("data_evolucao" = "dia")) %>%
   mutate(semana_epidemiologica_evolucao = semana_epidemiologica) %>%
   select(!semana_epidemiologica)
-
-leitos_uti <- leitos_uti %>%
-  left_join(semana, by = c("data_atualizacao" = "dia"))
-
 
 # lendo banco de dados com populações por faixa etária e sexo no RS
 

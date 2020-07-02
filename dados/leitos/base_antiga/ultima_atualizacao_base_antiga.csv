@@ -1,4 +1,4 @@
-cnes,hospital,codigo_ibge,municipio,regiao_covid,codigo_regiao_covid,LATITUDE,LONGITUDE,data_atualizacao,leitos_total,leitos_internacoes,leitos_covid,lotacao,leitos_disponiveis,semana_epidemiologica
+cnes,hospital,codigo_ibge,municipio,regiao_covid,codigo_regiao_covid,latitude,longitude,data_atualizacao,leitos_total,leitos_internacoes,leitos_covid,lotacao,leitos_disponiveis,semana_epidemiologica
 2244187,Hospital De Mata,4312104,Mata,SANTA MARIA - R01 R02,1,-29.56561,-54.46179,2020-04-28,0,0,0,NA,0,18
 2244187,Hospital De Mata,4312104,Mata,SANTA MARIA - R01 R02,1,-29.56561,-54.46179,2020-04-29,0,0,0,NA,0,18
 2244187,Hospital De Mata,4312104,Mata,SANTA MARIA - R01 R02,1,-29.56561,-54.46179,2020-04-30,0,0,0,NA,0,18
