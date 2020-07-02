@@ -2031,11 +2031,24 @@ server <- function(input, output) {
   output$dados_regioes_covid <- renderValueBox({
     
     valueBox(
-      value = "Dados regiões COVID",
+      value = "Regiões COVID",
       subtitle = "Shapefiles gentilmente gentilmente fornecidos pela DEPLAN-SEPLAG",
       icon = icon("archive"),
       color = "aqua",
       href = "https://planejamento.rs.gov.br/estudos-deplan",
+      width = 12
+    )
+    
+  })
+  
+  output$populacao_fee <- renderValueBox({
+    
+    valueBox(
+      value = "População RS - FEE",
+      subtitle = "Estimativas da população do estado por município, faixa etária e sexo",
+      icon = icon("users"),
+      color = "aqua",
+      href = "https://arquivofee.rs.gov.br/indicadores/populacao/estimativas-populacionais-revisao-2018/",
       width = 12
     )
     

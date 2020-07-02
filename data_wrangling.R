@@ -11,8 +11,7 @@ library(tidyverse)
 # esse script serve para organizar todos objetos de banco de dados que utilizarei no aplicativo
 # são 3 principais:
 # - o de casos do rs obtido através da ses agora
-# - dois shapefiles do rs(municipio e mesoregião) com dados sobre os casos de corona(confirmaodos, 
-# incidencia, mortes, etc)
+# - dois shapefiles do rs(municipio e região civud) com dados sobre os casos de corona(confirmaodos, mortes, etc)
 # - um arquivo com latitudes e longitudes das cidades/hospitais e seus leitos
 # - dois shapefiles do rs(municipio e mesoregião) com dados sobre os leitos
 
@@ -161,139 +160,161 @@ dados_mapa_rs_reg <- mapa_reg_rs %>%
 # lendo leitos UTI do site da SES
 #################################
 
-hospital_municipio <- read_csv("dados/leitos/outros/hospital_municipio.csv") %>%
-  mutate(codigo_ibge = as.character(codigo_ibge))
+# SES começou a disponibilizar informações em outro site mas vou deixar aqui comentado como fazíamos antes
+# caso de algum problema e tenhamos que voltar a fazer como fazíamos antes
+# 
+# hospital_municipio <- read_csv("dados/leitos/outros/hospital_municipio.csv") %>%
+#   mutate(codigo_ibge = as.character(codigo_ibge))
+# 
+# dados_cnes <- read_csv("dados/leitos/outros/base_cnes_atualizada.csv") %>%
+#   select(CNES, LATITUDE, LONGITUDE)
+# 
+# pasta <- "dados/leitos/"
+# arquivos <- list.files(pasta, pattern = ".csv")
+# caminhos <- str_c(pasta, arquivos)
+# 
+# # arrumando problema da base deles em que em vez da coluna com dados de hospitais ter o nome "Hosital"
+# # ta com nome municipios(começou no dia 04/05/2020 e ta indo até hj 07/05/2020)
+# # ah e também a coluna Cód q possui o código cnes do hospital está escrita como Cód IBGE agr
+# # incrivel como sempre conseguem arranjar algum novo problema com esses dados da SES
+# 
+# arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.csv","leitos_dados_ses_07_05.csv",
+#                          "leitos_dados_ses_08_05.csv","leitos_dados_ses_09_05.csv","leitos_dados_ses_10_05.csv",
+#                          "leitos_dados_ses_11_05.csv","leitos_dados_ses_12_05.csv","leitos_dados_ses_13_05.csv",
+#                          "leitos_dados_ses_14_05.csv","leitos_dados_ses_15_05.csv","leitos_dados_ses_16_05.csv",
+#                          "leitos_dados_ses_17_05.csv","leitos_dados_ses_18_05.csv","leitos_dados_ses_19_05.csv",
+#                          "leitos_dados_ses_20_05.csv","leitos_dados_ses_21_05.csv","leitos_dados_ses_22_05.csv",
+#                          "leitos_dados_ses_23_05.csv","leitos_dados_ses_24_05.csv","leitos_dados_ses_25_05.csv",
+#                          "leitos_dados_ses_26_05.csv","leitos_dados_ses_27_05.csv","leitos_dados_ses_28_05.csv",
+#                          "leitos_dados_ses_29_05.csv","leitos_dados_ses_30_05.csv","leitos_dados_ses_31_05.csv",
+#                          "leitos_dados_ses_01_06.csv","leitos_dados_ses_02_06.csv","leitos_dados_ses_03_06.csv",
+#                          "leitos_dados_ses_04_06.csv","leitos_dados_ses_05_06.csv","leitos_dados_ses_06_06.csv",
+#                          "leitos_dados_ses_07_06.csv","leitos_dados_ses_08_06.csv","leitos_dados_ses_09_06.csv",
+#                          "leitos_dados_ses_10_06.csv","leitos_dados_ses_11_06.csv","leitos_dados_ses_12_06.csv",
+#                          "leitos_dados_ses_13_06.csv","leitos_dados_ses_14_06.csv","leitos_dados_ses_15_06.csv",
+#                          "leitos_dados_ses_16_06.csv","leitos_dados_ses_17_06.csv","leitos_dados_ses_18_06.csv",
+#                          "leitos_dados_ses_19_06.csv","leitos_dados_ses_20_06.csv","leitos_dados_ses_21_06.csv",
+#                          "leitos_dados_ses_22_06.csv","leitos_dados_ses_23_06.csv","leitos_dados_ses_24_06.csv",
+#                          "leitos_dados_ses_25_06.csv","leitos_dados_ses_26_06.csv","leitos_dados_ses_27_06.csv",
+#                          "leitos_dados_ses_28_06.csv","leitos_dados_ses_29_06.csv","leitos_dados_ses_30_06.csv",
+#                          "leitos_dados_ses_01_07.csv")
+# caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
+# 
+# arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
+#   map(dplyr::mutate, Cód = `Cód IBGE`, Hospital = Município_1) %>%
+#   map(dplyr::select, -(`Taxa Ocupação`)) %>%
+#   bind_rows()
+# 
+# caminhos <- caminhos[!(caminhos %in% caminhos_troca_nome)]
+# 
+# leitos_uti <- map(caminhos, read_csv) %>%
+#   map(dplyr::select, -(`Taxa Ocupação`)) %>%
+#   bind_rows() %>%
+#   bind_rows(arruma_nome) %>% # adicionando arquivos bugados
+#   left_join(hospital_municipio, by = c("Cód" = "cnes")) %>%
+#   left_join(regiao_covid_mun, by = "codigo_ibge") %>%
+#   mutate(data_atualizacao = lubridate::as_date(`Últ Atualização`, format = "%d/%m/%Y",  tz = "America/Sao_Paulo"),
+#          Hospital = str_to_title(Hospital)) %>%
+#   distinct(`Cód`, data_atualizacao, .keep_all = T) %>%
+#   select(data_atualizacao = data_atualizacao, cnes = Cód, hospital = Hospital, codigo_ibge = codigo_ibge, municipio, leitos_internacoes = Pacientes,
+#          leitos_total = Leitos, leitos_covid = Confirmados, regiao_covid, codigo_regiao_covid, data_hora_atualizacao = `Últ Atualização`) %>%
+#   left_join(dados_cnes, by = c("cnes" = "CNES")) %>%
+#   filter(data_atualizacao > "2020-04-27") %>%
+#   select(!data_hora_atualizacao) %>%
+#   arrange(data_atualizacao)
+# 
+# # resolvendo problema da mudança de nome no hospital de uruguaiana
+# # nome antigo: Santa Casa De Uruguaiana
+# # nome novo: Hospital Santa Casa De Uruguaiana
+# 
+# leitos_uti <- leitos_uti %>%
+#   mutate(hospital = ifelse(cnes == 2248190,"Hospital Santa Casa De Uruguaiana",hospital))
+# 
+# # adicionando o municiío ao nome do hospital para que cada hospital fique único
+# 
+# aux <- leitos_uti %>%
+#   filter(data_atualizacao == max(data_atualizacao)) %>%
+#   group_by(hospital) %>%
+#   summarise(n = n(), cnes = cnes) %>%
+#   filter(n > 1) %>%
+#   mutate(hospital_unico = str_c(hospital,"_",cnes)) %>%
+#   select(-n)
+# 
+# hospitais_troca <- unique(aux$hospital)
+# 
+# leitos_uti <- leitos_uti %>%
+#   left_join(aux, by = c("hospital","cnes")) %>%
+#   mutate(hospital = ifelse(hospital %in% hospitais_troca, hospital_unico, hospital)) %>%
+#   select(-hospital_unico)
+# 
+# 
+# # resolvendo problema dos dados incompletos
+# # pegando dados de dias anteriores para os dias sem dado
+# 
+# # colocando as datas como se fosse colunas para verificar quais os dados que estão faltando para cada hospital
+# 
+# aux_total <- leitos_uti %>%
+#   select(!c(leitos_internacoes,leitos_covid)) %>%
+#   pivot_wider(names_from = data_atualizacao, values_from = leitos_total) %>%
+#   as.data.frame()
+# 
+# aux_internados <- leitos_uti %>%
+#   select(!c(leitos_total,leitos_covid)) %>%
+#   pivot_wider(names_from = data_atualizacao, values_from = leitos_internacoes) %>%
+#   as.data.frame()
+# 
+# aux_covid <- leitos_uti %>%
+#   select(!c(leitos_total,leitos_internacoes)) %>%
+#   pivot_wider(names_from = data_atualizacao, values_from = leitos_covid) %>%
+#   as.data.frame()
+# 
+# # e a partir dai caso um dado esteja sem atualização para aquele dia, então pega-se o dado do dia anterior
+# # foi bem hardcore mas acho que deu tudo certo, mas acho que seria importante avisar disso em algum momento,
+# # que estamos supondo a mesma situação do dia anterior para aqueles dias em que não temos dados(tudo a partir de quando começamos a coletar os dados no dia 28/04/20)
+# 
+# for (i in 10:ncol(aux_total)) {
+#   aux_total[,i] <- ifelse(is.na(aux_total[,i]),aux_total[,(i-1)],aux_total[,i])
+#   aux_internados[,i] <- ifelse(is.na(aux_internados[,i]),aux_internados[,(i-1)],aux_internados[,i])
+#   aux_covid[,i] <- ifelse(is.na(aux_covid[,i]),aux_covid[,(i-1)],aux_covid[,i])
+# }
+# 
+# aux_todos <- aux_total %>%
+#   pivot_longer(-names(aux_total)[1:8],names_to = "data_atualizacao", values_to = "leitos_total")
+# 
+# aux_internados <- aux_internados %>%
+#   pivot_longer(-names(aux_internados)[1:8],names_to = "data_atualizacao", values_to = "leitos_internacoes") %>%
+#   select(cnes,data_atualizacao,leitos_internacoes)
+# 
+# aux_covid <- aux_covid %>%
+#   pivot_longer(-names(aux_covid)[1:8],names_to = "data_atualizacao", values_to = "leitos_covid") %>%
+#   select(cnes,data_atualizacao,leitos_covid)
+# 
+# leitos_uti <- aux_todos %>%
+#   left_join(aux_internados, by = c("cnes","data_atualizacao")) %>%
+#   left_join(aux_covid, by = c("cnes","data_atualizacao")) %>%
+#   mutate(data_atualizacao = lubridate::as_date(data_atualizacao)) %>%
+#   mutate(lotacao = ifelse(leitos_total == 0, NA, leitos_internacoes/leitos_total),
+#          leitos_disponiveis = leitos_total - leitos_internacoes)
 
-dados_cnes <- read_csv("dados/leitos/outros/base_cnes_atualizada.csv") %>%
-  select(CNES, LATITUDE, LONGITUDE)
 
-pasta <- "dados/leitos/"
-arquivos <- list.files(pasta, pattern = ".csv")
-caminhos <- str_c(pasta, arquivos)
+# NOVO SITE COM NOVA BASE DE DADOS
 
-# arrumando problema da base deles em que em vez da coluna com dados de hospitais ter o nome "Hosital"
-# ta com nome municipios(começou no dia 04/05/2020 e ta indo até hj 07/05/2020)
-# ah e também a coluna Cód q possui o código cnes do hospital está escrita como Cód IBGE agr
-# incrivel como sempre conseguem arranjar algum novo problema com esses dados da SES
+# pegando último banco da base antiga para não perder as primeiras atualizações
 
-arquivos_troca_nome <- c("leitos_dados_ses_05_05.csv","leitos_dados_ses_06_05.csv","leitos_dados_ses_07_05.csv",
-                         "leitos_dados_ses_08_05.csv","leitos_dados_ses_09_05.csv","leitos_dados_ses_10_05.csv",
-                         "leitos_dados_ses_11_05.csv","leitos_dados_ses_12_05.csv","leitos_dados_ses_13_05.csv",
-                         "leitos_dados_ses_14_05.csv","leitos_dados_ses_15_05.csv","leitos_dados_ses_16_05.csv",
-                         "leitos_dados_ses_17_05.csv","leitos_dados_ses_18_05.csv","leitos_dados_ses_19_05.csv",
-                         "leitos_dados_ses_20_05.csv","leitos_dados_ses_21_05.csv","leitos_dados_ses_22_05.csv",
-                         "leitos_dados_ses_23_05.csv","leitos_dados_ses_24_05.csv","leitos_dados_ses_25_05.csv",
-                         "leitos_dados_ses_26_05.csv","leitos_dados_ses_27_05.csv","leitos_dados_ses_28_05.csv",
-                         "leitos_dados_ses_29_05.csv","leitos_dados_ses_30_05.csv","leitos_dados_ses_31_05.csv",
-                         "leitos_dados_ses_01_06.csv","leitos_dados_ses_02_06.csv","leitos_dados_ses_03_06.csv",
-                         "leitos_dados_ses_04_06.csv","leitos_dados_ses_05_06.csv","leitos_dados_ses_06_06.csv",
-                         "leitos_dados_ses_07_06.csv","leitos_dados_ses_08_06.csv","leitos_dados_ses_09_06.csv",
-                         "leitos_dados_ses_10_06.csv","leitos_dados_ses_11_06.csv","leitos_dados_ses_12_06.csv",
-                         "leitos_dados_ses_13_06.csv","leitos_dados_ses_14_06.csv","leitos_dados_ses_15_06.csv",
-                         "leitos_dados_ses_16_06.csv","leitos_dados_ses_17_06.csv","leitos_dados_ses_18_06.csv",
-                         "leitos_dados_ses_19_06.csv","leitos_dados_ses_20_06.csv","leitos_dados_ses_21_06.csv",
-                         "leitos_dados_ses_22_06.csv","leitos_dados_ses_23_06.csv","leitos_dados_ses_24_06.csv",
-                         "leitos_dados_ses_25_06.csv","leitos_dados_ses_26_06.csv","leitos_dados_ses_27_06.csv",
-                         "leitos_dados_ses_28_06.csv","leitos_dados_ses_29_06.csv","leitos_dados_ses_30_06.csv",
-                         "leitos_dados_ses_01_07.csv")
-caminhos_troca_nome <- str_c(pasta,arquivos_troca_nome)
+base_antiga <- read_csv("dados/leitos/base_antiga/ultima_atualizacao_base_antiga.csv")
 
-arruma_nome <- map(caminhos_troca_nome, read_csv) %>%
-  map(dplyr::mutate, Cód = `Cód IBGE`, Hospital = Município_1) %>%
-  map(dplyr::select, -(`Taxa Ocupação`)) %>%
-  bind_rows() 
+names(base_antiga) <-
 
-caminhos <- caminhos[!(caminhos %in% caminhos_troca_nome)]
+nova_base <- read_csv2("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais",
+                       locale = readr::locale(encoding = "latin1"))
 
-leitos_uti <- map(caminhos, read_csv) %>%
-  map(dplyr::select, -(`Taxa Ocupação`)) %>%
-  bind_rows() %>%
-  bind_rows(arruma_nome) %>% # adicionando arquivos bugados
-  left_join(hospital_municipio, by = c("Cód" = "cnes")) %>%
-  left_join(regiao_covid_mun, by = "codigo_ibge") %>%
-  mutate(data_atualizacao = lubridate::as_date(`Últ Atualização`, format = "%d/%m/%Y",  tz = "America/Sao_Paulo"),
-         Hospital = str_to_title(Hospital)) %>%
-  distinct(`Cód`, data_atualizacao, .keep_all = T) %>%
-  select(data_atualizacao = data_atualizacao, cnes = Cód, hospital = Hospital, codigo_ibge = codigo_ibge, municipio, leitos_internacoes = Pacientes,
-         leitos_total = Leitos, leitos_covid = Confirmados, regiao_covid, codigo_regiao_covid, data_hora_atualizacao = `Últ Atualização`) %>%
-  left_join(dados_cnes, by = c("cnes" = "CNES")) %>%
-  filter(data_atualizacao > "2020-04-27") %>%
-  select(!data_hora_atualizacao) %>%
-  arrange(data_atualizacao)
-
-# resolvendo problema da mudança de nome no hospital de uruguaiana
-# nome antigo: Santa Casa De Uruguaiana
-# nome novo: Hospital Santa Casa De Uruguaiana
-
-leitos_uti <- leitos_uti %>%
-  mutate(hospital = ifelse(cnes == 2248190,"Hospital Santa Casa De Uruguaiana",hospital))
-
-# adicionando o municiío ao nome do hospital para que cada hospital fique único
-
-aux <- leitos_uti %>%
-  filter(data_atualizacao == max(data_atualizacao)) %>%
-  group_by(hospital) %>%
-  summarise(n = n(), cnes = cnes) %>%
-  filter(n > 1) %>%
-  mutate(hospital_unico = str_c(hospital,"_",cnes)) %>%
-  select(-n)
-
-hospitais_troca <- unique(aux$hospital)
-
-leitos_uti <- leitos_uti %>%
-  left_join(aux, by = c("hospital","cnes")) %>%
-  mutate(hospital = ifelse(hospital %in% hospitais_troca, hospital_unico, hospital)) %>%
-  select(-hospital_unico)
-
-
-# resolvendo problema dos dados incompletos
-# pegando dados de dias anteriores para os dias sem dado
-
-# colocando as datas como se fosse colunas para verificar quais os dados que estão faltando para cada hospital
-
-aux_total <- leitos_uti %>%
-  select(!c(leitos_internacoes,leitos_covid)) %>%
-  pivot_wider(names_from = data_atualizacao, values_from = leitos_total) %>%
-  as.data.frame()
-
-aux_internados <- leitos_uti %>%
-  select(!c(leitos_total,leitos_covid)) %>%
-  pivot_wider(names_from = data_atualizacao, values_from = leitos_internacoes) %>%
-  as.data.frame()
-
-aux_covid <- leitos_uti %>%
-  select(!c(leitos_total,leitos_internacoes)) %>%
-  pivot_wider(names_from = data_atualizacao, values_from = leitos_covid) %>%
-  as.data.frame()
-
-# e a partir dai caso um dado esteja sem atualização para aquele dia, então pega-se o dado do dia anterior
-# foi bem hardcore mas acho que deu tudo certo, mas acho que seria importante avisar disso em algum momento,
-# que estamos supondo a mesma situação do dia anterior para aqueles dias em que não temos dados(tudo a partir de quando começamos a coletar os dados no dia 28/04/20)
-
-for (i in 10:ncol(aux_total)) {
-  aux_total[,i] <- ifelse(is.na(aux_total[,i]),aux_total[,(i-1)],aux_total[,i])
-  aux_internados[,i] <- ifelse(is.na(aux_internados[,i]),aux_internados[,(i-1)],aux_internados[,i])
-  aux_covid[,i] <- ifelse(is.na(aux_covid[,i]),aux_covid[,(i-1)],aux_covid[,i])
-}
-
-aux_todos <- aux_total %>%
-  pivot_longer(-names(aux_total)[1:8],names_to = "data_atualizacao", values_to = "leitos_total")
-
-aux_internados <- aux_internados %>%
-  pivot_longer(-names(aux_internados)[1:8],names_to = "data_atualizacao", values_to = "leitos_internacoes") %>%
-  select(cnes,data_atualizacao,leitos_internacoes)
-
-aux_covid <- aux_covid %>%
-  pivot_longer(-names(aux_covid)[1:8],names_to = "data_atualizacao", values_to = "leitos_covid") %>%
-  select(cnes,data_atualizacao,leitos_covid)
-
-leitos_uti <- aux_todos %>%
-  left_join(aux_internados, by = c("cnes","data_atualizacao")) %>%
-  left_join(aux_covid, by = c("cnes","data_atualizacao")) %>%
-  mutate(data_atualizacao = lubridate::as_date(data_atualizacao)) %>%
-  mutate(lotacao = ifelse(leitos_total == 0, NA, leitos_internacoes/leitos_total),
-         leitos_disponiveis = leitos_total - leitos_internacoes)
-
+names(nova_base) <-  c("codigo_ibge", "municipio", "lat_mun", "lon_mun", "estado", "crs", "regiao_saude",
+                       "codigo_macrorregiao_saude", "macrorregiao_saude", "codigo_regiao_covid",
+                       "regiao_covid", "cnes", "estabelcimento_saude", "latitude", "longitude", "data_atualizacao",
+                       "leitos_uti_adulto","leitos_clinicos_adulto","leitos_uti_pediatrico","respiradores", 
+                       "uti_adulto_suspeitos_covid", "uti_adulto_confirmados_covid","uti_pediatrico_suspeitos_covid", "uti_pediatrico_confirmados_covid",
+                       "clinico_adulto_suspeitos_covid", "clinico_adulto_confirmados_covid","clinico_pediatrico_suspeitos_covid", "clinico_pediatrico_confirmados_covid",
+                       "uti_adulto_respiradores","uti_adulto_internacoes")
 
 leitos_join_mun <- leitos_uti %>%
   group_by(cnes) %>%

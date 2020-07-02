@@ -242,11 +242,15 @@ body <- dashboardBody(
                   valueBoxOutput("dados_leitos",width = 12)
                 ),
                 column(
-                  width = 6,
+                  width = 4,
                   valueBoxOutput("dados_regioes_covid",width = 12)
                 ),
                 column(
-                  width = 6,
+                  width = 4,
+                  valueBoxOutput("populacao_fee",width = 12)
+                ),
+                column(
+                  width = 4,
                   valueBoxOutput("licenca", width = 12)
                 )
               )
