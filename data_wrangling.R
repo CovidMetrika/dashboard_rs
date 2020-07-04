@@ -341,15 +341,27 @@ new_data <- new_data %>%
   group_by(cnes) %>%
   filter(data_atualizacao == max(data_atualizacao)) %>%
   ungroup() %>%
-  mutate(data_atualizacao == median(data_atualizacao)) %>%
+  mutate(data_atualizacao = median(data_atualizacao)) %>%
   select(names(ultima_atualizacao)) %>%
-  select(-hospital) %>%
-  left_join(unique(ultima_atualizacao[,c("hospital","cnes")]), by = "cnes") %>%
   mutate(codigo_ibge = as.character(codigo_ibge),
          codigo_regiao_covid = as.numeric(codigo_regiao_covid),
          latitude = as.numeric(str_c(str_extract(latitude, "^..."),".",str_remove(latitude, "^..."))),
-         longitude = as.numeric(str_c(str_extract(longitude, "^..."),".",str_remove(longitude, "^..."))))
+         longitude = as.numeric(str_c(str_extract(longitude, "^..."),".",str_remove(longitude, "^...")))) 
 
+# verficando se há algum novo hospital 
+
+if(sum(!unique(new_data$cnes) %in% unique(ultima_atualizacao$cnes)) > 0) {
+  novos_hospitais <- new_data[!new_data$cnes %in% unique(ultima_atualizacao$cnes),] %>%
+    mutate(hospital = str_to_title(hospital))
+  
+  ultima_atualizacao <- ultima_atualizacao %>%
+    add_case(novos_hospitais)
+  
+} 
+
+new_data <- new_data %>%
+  select(-hospital) %>%
+  left_join(unique(ultima_atualizacao[,c("hospital","cnes")]), by = "cnes")
 
 leitos_uti <- new_data %>%
   add_case(ultima_atualizacao) %>%
