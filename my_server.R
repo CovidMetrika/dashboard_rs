@@ -1375,9 +1375,9 @@ server <- function(input, output) {
             ),
             column(
               width = 2,
-              my_progress_bar(value = prof_saude$prop*100, striped = T, active = T, color = "red"),
+              my_progress_bar(value = outros$prop*100, striped = T, active = T, color = "red"),
               descriptionBlock(
-                header = paste0(round(prof_saude$prop*100,2),"%"),
+                header = paste0(round(outros$prop*100,2),"%"),
                 text = "Outros"
               )
             )
@@ -1391,7 +1391,7 @@ server <- function(input, output) {
           width = NULL,
           background = NULL,
           status = "warning",
-          my_progress_bar(value = outros$prop*100, striped = T, active = T, color = "yellow"),
+          my_progress_bar(value = prof_saude$prop*100, striped = T, active = T, color = "yellow"),
           boxPad(
             color = "yellow",
             descriptionBlock(
