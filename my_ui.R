@@ -1,6 +1,112 @@
 # myUI
 
-options(OutDec = ",") # Muda de ponto para virgula nos decimais! 
+# criando alguns objetos de UI
+
+# criando funcao pra barra de progresso do shiny ui
+
+my_progress_bar <- function(value = 0, label = FALSE, color = "aqua", size = NULL,
+                            striped = FALSE, active = FALSE, vertical = FALSE) {
+  stopifnot(is.numeric(value))
+  if (value > 100) {
+    value <- 100
+  }
+  if (value < 0)
+    stop("'value' should be in the range from 0 to 100.", call. = FALSE)
+  if (!(color %in% shinydashboard:::validColors || color %in% shinydashboard:::validStatuses))
+    stop("'color' should be a valid status or color.", call. = FALSE)
+  if (!is.null(size))
+    size <- match.arg(size, c("sm", "xs", "xxs"))
+  text_value <- paste0(value, "%")
+  if (vertical)
+    style <- htmltools::css(height = text_value, `min-height` = "2em")
+  else
+    style <- htmltools::css(width = text_value, `min-width` = "2em")
+  tags$div(
+    class = "progress",
+    class = if (!is.null(size)) paste0("progress-", size),
+    class = if (vertical) "vertical",
+    class = if (active) "active",
+    tags$div(
+      class = "progress-bar",
+      class = paste0("progress-bar-", color),
+      class = if (striped) "progress-bar-striped",
+      style = style,
+      role = "progressbar",
+      `aria-valuenow` = value,
+      `aria-valuemin` = 0,
+      `aria-valuemax` = 100,
+      tags$span(class = if (!label) "sr-only", text_value)
+    )
+  )
+}
+
+# criando função pra criar caixas de cada hospital
+
+caixinha_hospital <- function(var1,var2,var3) {
+  
+  antigo_dia <- max(leitos$data_atualizacao)-1
+  novo_dia <- max(leitos$data_atualizacao)
+  
+  aux <- leitos %>%
+    filter(classe == var2) %>%
+    filter(tipo %in% var1) %>%
+    filter(local == var3) %>%
+    filter(data_atualizacao %in% novo_dia)
+  
+  aux2 <- leitos %>%
+    filter(classe == var2) %>%
+    filter(tipo %in% var1) %>%
+    filter(local == var3) %>%
+    filter(data_atualizacao %in% antigo_dia)
+  
+  porcentagem <- sum(aux$internados)/sum(aux$leitos)
+  
+  status <- ifelse(porcentagem < 0.5, "primary",
+                   ifelse(porcentagem < 0.75, "warning", "danger"))
+  dia_anterior <- sum(aux2$internados)/sum(aux2$leitos)
+  numero_diff <- sum(aux$internados)-sum(aux2$internados)
+  porcentagem_diff <- porcentagem-dia_anterior
+  icone <- ifelse(porcentagem_diff < 0, "fa fa-caret-down", "fa fa-caret-up")
+  cor <- ifelse(porcentagem_diff < 0 , "green", "red")
+  
+  if(nrow(aux)!=0) {
+    box(
+      width = 3,
+      title = var3,
+      background = NULL,
+      status = status,
+      my_progress_bar(value = porcentagem*100, striped = T, active = T, color = status),
+      footer = fluidRow(
+        column(
+          width = 6,
+          descriptionBlock(
+            number = numero_diff,
+            number_color = cor,
+            number_icon = icone,
+            header = sum(aux$internados),
+            text = "Leitos ocupados"
+          )
+        ),
+        column(
+          width = 6,
+          descriptionBlock(
+            number = paste0(round(porcentagem_diff*100, 2),"%"),
+            number_color = cor,
+            number_icon = icone,
+            header = paste0(round(porcentagem*100,2),"%"),
+            text = "Lotação"
+          )
+        )
+      )
+    )
+  }
+}
+
+
+
+#options(OutDec = ",") # Muda de ponto para virgula nos decimais! 
+# infelizmente fazer essa mudança causa erro nas funções das barras de progresso
+# até achar uma solução vou deixar comentado o comando
 
 header <- dashboardHeaderPlus(
   enable_rightsidebar = T,
@@ -140,6 +246,10 @@ body <- dashboardBody(
                 column(
                   width = 6,
                   uiOutput("ui_sexo_covid")
+                ),
+                column(
+                  width = 12,
+                  uiOutput("ui_sintomas_saude")
                 ),
                 column(
                   width = 12,

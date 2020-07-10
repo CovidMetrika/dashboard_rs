@@ -68,12 +68,13 @@ if(request$status_code == 404) {
   write_csv(dados_ses,"dados/covid/ses_reserva.csv")
 }
 
-names(dados_ses)[1:22] <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid","regiao_covid",
+names(dados_ses)[1:25] <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid","regiao_covid",
                       "sexo","faixa_etaria","tipo_teste",
                       "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao",
                       "sintoma_febre","sintoma_tosse",
                       "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades",
-                      "data_inclusao_obito","data_evolucao_estimada","raca_cor","profissional_de_saude")
+                      "data_inclusao_obito","data_evolucao_estimada","raca_cor","profissional_de_saude",
+                      "bairro","hospitalizacao_srag","fonte_informacao")
 
 dados_covid_rs <- dados_ses %>%
   mutate(data_confirmacao = as_date(data_confirmacao, format = "%d/%m/%y"),

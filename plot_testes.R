@@ -42,7 +42,7 @@ plot_waffle <- function(){
 # plot do número de casos em: (acompanhamento, recuperados, óbitos) por dia
 plot_evolucao <- function(){
   
-  #input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", tipo_covid = "_taxa",filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
+  input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", tipo_covid = "_taxa",filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
   
   pop <- pop_regiao %>%
     filter(regiao_covid %in% input$filtro_covid)
@@ -137,7 +137,7 @@ plot_evolucao <- function(){
   return(p)
 }
 
-
+plot_evolucao()
 
 
 # plot

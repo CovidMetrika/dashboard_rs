@@ -15,6 +15,44 @@ opcoes <- list(
   "acompanhamento_taxa" = list("cor" = "#ff851b", "paleta" = "Oranges", "texto" = "Taxa de acompanhamento")
 )
 
+# função que cria barra de progresso horizontal para o ui
+
+my_progress_bar <- function(value, label = FALSE, color = "aqua", size = NULL,
+                            striped = FALSE, active = FALSE, vertical = FALSE) {
+  stopifnot(is.numeric(value))
+  if (value > 100) {
+    value <- 100
+  }
+  if (value < 0)
+    stop("'value' should be in the range from 0 to 100.", call. = FALSE)
+  if (!(color %in% shinydashboard:::validColors || color %in% shinydashboard:::validStatuses))
+    stop("'color' should be a valid status or color.", call. = FALSE)
+  if (!is.null(size))
+    size <- match.arg(size, c("sm", "xs", "xxs"))
+  text_value <- paste0(value, "%")
+  if (vertical)
+    style <- htmltools::css(height = text_value, `min-height` = "2em")
+  else
+    style <- htmltools::css(width = text_value, `min-width` = "2em")
+  tags$div(
+    class = "progress",
+    class = if (!is.null(size)) paste0("progress-", size),
+    class = if (vertical) "vertical",
+    class = if (active) "active",
+    tags$div(
+      class = "progress-bar",
+      class = paste0("progress-bar-", color),
+      class = if (striped) "progress-bar-striped",
+      style = style,
+      role = "progressbar",
+      `aria-valuenow` = value,
+      `aria-valuemin` = 0,
+      `aria-valuemax` = 100,
+      tags$span(class = if (!label) "sr-only", text_value)
+    )
+  )
+}
+
 # função que cria os gráficos de faixa etária e sexo
 
 gg <- function(var_covid, agrup_covid = "municipio", tipo_covid, tipo_var, formato = NA, filtro){
@@ -1245,6 +1283,127 @@ server <- function(input, output) {
       formato = "tabela",
       filtro = input$filtro_sexo_covid
     )
+  })
+  
+  # ui_sinomas_covid
+  
+  output$ui_sintomas_saude <- renderUI({
+    
+    febre <- dados_covid_rs %>%
+      group_by(sintoma_febre) %>%
+      filter(!is.na(sintoma_febre)) %>%
+      summarise(n = n()) %>%
+      mutate(prop = n/sum(n)) %>%
+      filter(sintoma_febre == "SIM")
+    
+    tosse <- dados_covid_rs %>%
+      group_by(sintoma_tosse) %>%
+      filter(!is.na(sintoma_tosse)) %>%
+      summarise(n = n()) %>%
+      mutate(prop = n/sum(n)) %>%
+      filter(sintoma_tosse == "SIM")
+    
+    garganta <- dados_covid_rs %>%
+      group_by(sintoma_garganta) %>%
+      filter(!is.na(sintoma_garganta)) %>%
+      summarise(n = n()) %>%
+      mutate(prop = n/sum(n)) %>%
+      filter(sintoma_garganta == "SIM")
+    
+    dispneia <- dados_covid_rs %>%
+      group_by(sintoma_dispneia) %>%
+      filter(!is.na(sintoma_dispneia)) %>%
+      summarise(n = n()) %>%
+      mutate(prop = n/sum(n)) %>%
+      filter(sintoma_dispneia == "SIM")
+    
+    outros <- dados_covid_rs %>%
+      group_by(sintomas_outros) %>%
+      filter(!is.na(sintomas_outros)) %>%
+      summarise(n = n()) %>%
+      mutate(prop = n/sum(n)) %>%
+      filter(sintomas_outros == "SIM")
+    
+    prof_saude <- dados_covid_rs %>%
+      group_by(profissional_de_saude) %>%
+      filter(!is.na(profissional_de_saude)) %>%
+      summarise(n = n()) %>%
+      mutate(prop = n/sum(n)) %>%
+      filter(profissional_de_saude == "SIM")
+    
+    
+    fluidRow(
+      column(
+        width = 10,
+        box(
+          title = "Sintomas apresentados pelos casos confirmados",
+          width = NULL,
+          background = NULL,
+          status = "danger",
+          footer = fluidRow(
+            column(
+              width = 2,
+              my_progress_bar(value = febre$prop*100, striped = T, active = T, color = "red"),
+              descriptionBlock(
+                header = paste0(round(febre$prop*100,2),"%"),
+                text = "Febre"
+              )
+            ),
+            column(
+              width = 2,
+              my_progress_bar(value = tosse$prop*100, striped = T, active = T, color = "red"),
+              descriptionBlock(
+                header = paste0(round(tosse$prop*100,2),"%"),
+                text = "Tosse"
+              )
+            ),
+            column(
+              width = 2,
+              my_progress_bar(value = garganta$prop*100, striped = T, active = T, color = "red"),
+              descriptionBlock(
+                header = paste0(round(garganta$prop*100,2),"%"),
+                text = "Dor de Garganta"
+              )
+            ),
+            column(
+              width = 2,
+              my_progress_bar(value = dispneia$prop*100, striped = T, active = T, color = "red"),
+              descriptionBlock(
+                header = paste0(round(dispneia$prop*100,2),"%"),
+                text = "Dispneia"
+              )
+            ),
+            column(
+              width = 2,
+              my_progress_bar(value = prof_saude$prop*100, striped = T, active = T, color = "red"),
+              descriptionBlock(
+                header = paste0(round(prof_saude$prop*100,2),"%"),
+                text = "Outros"
+              )
+            )
+          )
+        )
+      ),
+      column(
+        width = 2,
+        box(
+          title = "Profissionais de saúde infectados",
+          width = NULL,
+          background = NULL,
+          status = "warning",
+          my_progress_bar(value = outros$prop*100, striped = T, active = T, color = "yellow"),
+          boxPad(
+            color = "yellow",
+            descriptionBlock(
+              header = prof_saude$n,
+              number = paste0(round(prof_saude$prop*100,2),"%")
+            )
+          )
+        )
+      )
+    )
+    
+    
   })
   
   
