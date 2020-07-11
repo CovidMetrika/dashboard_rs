@@ -447,7 +447,7 @@ server <- function(input, output) {
   
   output$serie_covid_dia <- renderPlotly({
     
-    #input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", tipo_covid = "_taxa",filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
+    input <- list(var_covid = "acompanhamento", agrup_covid = "municipio", tipo_covid = "",filtro_covid = unique(dados_covid_rs$regiao_covid), filtro_serie_covid ="Todos selecionados")
     
     var <- rlang::sym(str_c(input$var_covid,input$tipo_covid))
     var2 <- rlang::sym(input$agrup_covid)

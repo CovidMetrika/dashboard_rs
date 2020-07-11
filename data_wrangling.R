@@ -117,7 +117,7 @@ dados_covid_rs <- dados_covid_rs %>%
 # adicionando as datas de recuperação para os casos não hospitalizados e sem data
 
 dados_covid_rs <- dados_covid_rs %>%
-  mutate(data_evolucao = ifelse(evolucao == "RECUPERADO", ifelse(hospitalizacao == "Nao", ifelse(is.na(data_evolucao),data_sintomas+days(14),data_evolucao),data_evolucao),data_evolucao)) %>%
+  mutate(data_evolucao = ifelse(evolucao == "RECUPERADO", ifelse(hospitalizacao == "NAO", ifelse(is.na(data_evolucao),ifelse(data_sintomas+days(14)<Sys.Date(),data_sintomas+days(14),NA),data_evolucao),data_evolucao),data_evolucao)) %>%
   mutate(data_evolucao = as_date(data_evolucao))
 
 # fazendo um banco de join para o mapa do rs
