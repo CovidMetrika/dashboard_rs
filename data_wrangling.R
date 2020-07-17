@@ -315,7 +315,7 @@ ultima_atualizacao <- read_csv("dados/leitos/nova_base/ultima_atualizacao.csv") 
 new_data <- read_csv2("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais",
                        locale = readr::locale(encoding = "latin1"))
 
-names(new_data) <-  c("codigo_ibge_6_digitos", "municipio", "lat_mun", "lon_mun", "estado", "crs", "regiao_saude",
+names(new_data)[1:30] <-  c("codigo_ibge_6_digitos", "municipio", "lat_mun", "lon_mun", "estado", "crs", "regiao_saude",
                        "codigo_macrorregiao_saude", "macrorregiao_saude", "codigo_regiao_covid",
                        "regiao_covid", "cnes", "hospital", "latitude", "longitude", "data_atualizacao",
                        "leitos_uti_adulto","leitos_clinicos_adulto","leitos_uti_pediatrico","respiradores", 
