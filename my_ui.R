@@ -128,9 +128,9 @@ sidebar <- dashboardSidebar(
 )
 
 rightsidebar <- rightSidebar(
-  width = 320,
+  width = 400,
   h3("Digite as regiões de interesse"),
-  selectizeInput("filtro_covid",
+  selectizeInput("filtro_geral",
                  label = NULL,
                  choices = levels(as.factor(dados_covid_rs$regiao_covid)),
                  selected = levels(as.factor(dados_covid_rs$regiao_covid)),
@@ -288,7 +288,7 @@ body <- dashboardBody(
               ),
               fluidRow(
                 column(
-                  width = 3,
+                  width = 4,
                   h3("Selecione a variável de interesse"),
                   radioButtons("var_leitos",
                                label = NULL,
@@ -306,14 +306,18 @@ body <- dashboardBody(
                                inline = T),
                 ),
                 column(
-                  width = 5,
-                  h3("Digite as regiões de interesse"),
-                  selectizeInput("filtro_leitos",
-                                 label = NULL,
-                                 choices = levels(as.factor(leitos_uti$regiao_covid)),
-                                 selected = levels(as.factor(leitos_uti$regiao_covid)),
-                                 multiple = T,
-                                 width = "100%"),
+                  width = 4,
+                  h3("Selecione a data de atualização dos dados"),
+                  dateInput(
+                    "data_leitos",
+                    label = NULL,
+                    value = max(leitos_uti$data_atualizacao, na.rm = T),
+                    min = min(leitos_uti$data_atualizacao, na.rm = T),
+                    max = max(leitos_uti$data_atualizacao, na.rm = T),
+                    format = "dd/mm/yyyy",
+                    language = "pt-BR", 
+                    width = "700px"
+                  ),
                 ),
                 column(
                   width = 7,
