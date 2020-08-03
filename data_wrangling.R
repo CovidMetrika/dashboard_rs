@@ -5,6 +5,7 @@ library(readxl)
 library(sf)
 library(jsonlite)
 library(abjutils)
+library(padr)
 library(lubridate)
 library(tidyverse)
 
@@ -304,7 +305,9 @@ dados_mapa_rs_reg <- mapa_reg_rs %>%
 
 # NOVO MÉTODO COM NOVA BASE DE DADOS
 
-# pegando último banco atualizado
+# é preciso atualizar os dados de 15 em 15 dias pois a SES disponibiliza assim
+
+# pegando último banco atualizado na nossa base
 
 ultima_atualizacao <- read_csv("dados/leitos/nova_base/ultima_atualizacao.csv") %>%
   mutate(codigo_ibge = as.character(codigo_ibge),
@@ -337,12 +340,20 @@ new_data <- new_data %>%
          leitos_covid = uti_adulto_confirmados_covid,
          lotacao = ifelse(leitos_uti_adulto != 0,uti_adulto_internacoes/leitos_uti_adulto,NA),
          leitos_disponiveis = leitos_uti_adulto-uti_adulto_internacoes) %>%
-  mutate(data_atualizacao = as_date(data_atualizacao)) %>%
-  left_join(semana, by = c("data_atualizacao" = "dia")) %>%
+  mutate(data_atualizacao = as_date(data_atualizacao)) 
+
+
+# preenchendo os dias vazios
+# descobri que tem uma função do pacote padr que da pra utilizar aqui
+# é usado para séries temporais e percebi que funcionaria aqui
+
+new_data <- new_data %>%
   group_by(cnes) %>%
-  filter(data_atualizacao == max(data_atualizacao)) %>%
+  padr::pad(start_val = min(new_data$data_atualizacao), end_val = max(new_data$data_atualizacao)) %>%
+  group_by(cnes) %>%
+  fill(everything(),.direction = "updown") %>%# preecnhendo os missings conforme grupo
+  left_join(semana, by = c("data_atualizacao" = "dia")) %>%
   ungroup() %>%
-  mutate(data_atualizacao = median(data_atualizacao)) %>%
   select(names(ultima_atualizacao)) %>%
   mutate(codigo_ibge = as.character(codigo_ibge),
          codigo_regiao_covid = as.numeric(codigo_regiao_covid),
@@ -363,6 +374,12 @@ if(sum(!unique(new_data$cnes) %in% unique(ultima_atualizacao$cnes)) > 0) {
 new_data <- new_data %>%
   select(-hospital) %>%
   left_join(unique(ultima_atualizacao[,c("hospital","cnes")]), by = "cnes")
+
+
+# retirando os dados que serão inseridos para não ocorrer duplicatas
+
+ultima_atualizacao <- ultima_atualizacao %>%
+  filter(!data_atualizacao %in% unique(new_data$data_atualizacao))
 
 leitos_uti <- new_data %>%
   add_case(ultima_atualizacao) %>%
