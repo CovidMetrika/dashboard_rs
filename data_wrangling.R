@@ -89,6 +89,13 @@ dados_covid_rs[dados_covid_rs$municipio=="Westfalia","municipio"] <- "Westfália
 dados_covid_rs[dados_covid_rs$municipio=="Vespasiano Correa","municipio"] <- "Vespasiano Corrêa"
 dados_covid_rs[dados_covid_rs$municipio=="Santana Do Livramento","municipio"] <- "Sant'ana Do Livramento"
 
+
+# arrumando as regiões covid que agora porto alegre e guaíba são as mesmas
+
+dados_covid_rs <- dados_covid_rs %>%
+  mutate(regiao_covid = ifelse(regiao_covid == "GUAIBA - R09", "PORTO ALEGRE - R09 R10",regiao_covid))
+
+
 # pegando o código ibge de 7 dígitos pelo nome do municipio
 
 dados_covid_rs <- dados_covid_rs %>%
