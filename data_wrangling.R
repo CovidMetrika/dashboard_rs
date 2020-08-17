@@ -74,7 +74,7 @@ names(dados_ses)[1:25] <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_c
                       "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao",
                       "sintoma_febre","sintoma_tosse",
                       "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades",
-                      "data_inclusao_obito","data_evolucao_estimada","raca_cor","profissional_de_saude",
+                      "data_inclusao_obito","data_evolucao_estimada","raca_cor","etnia_indigena","profissional_de_saude",
                       "bairro","hospitalizacao_srag","fonte_informacao")
 
 dados_covid_rs <- dados_ses %>%

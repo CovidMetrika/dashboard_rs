@@ -319,6 +319,8 @@ body <- dashboardBody(
                     width = "700px"
                   ),
                 ),
+              ),
+              fluidRow(
                 column(
                   width = 7,
                   mainPanel(

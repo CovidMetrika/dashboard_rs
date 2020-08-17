@@ -1437,7 +1437,7 @@ server <- function(input, output) {
     valueBox(
       sum(aux$leitos_disponiveis),
       "Leitos disponíveis",
-      icon = icon("procedures"),
+      icon = icon("bed"),
       color = "blue" 
     )
   })
