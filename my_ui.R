@@ -272,6 +272,8 @@ body <- dashboardBody(
                     width = 6,
                     h1("Leitos UTI - Adulto no Rio Grande do Sul"),
                     # h5(em(data_hora_atual))
+                    h4("O ícone no canto superior direito seleciona quais 
+                    as regiões covid do RS serão apresentadas")
                   ),
                   column(
                     tags$img(src = "logos.png", 
