@@ -392,7 +392,7 @@ ultima_atualizacao <- ultima_atualizacao %>%
   filter(!data_atualizacao %in% unique(new_data$data_atualizacao))
 
 leitos_uti <- new_data %>%
-  #add_case(ultima_atualizacao) %>%
+  add_case(ultima_atualizacao) %>%
   distinct(cnes,data_atualizacao,.keep_all = T)
 
 write_csv(leitos_uti,"dados/leitos/nova_base/ultima_atualizacao_2.csv")
