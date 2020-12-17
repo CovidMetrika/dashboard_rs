@@ -319,14 +319,20 @@ ultima_atualizacao <- read_csv("dados/leitos/nova_base/ultima_atualizacao_2.csv"
   mutate(codigo_ibge = as.character(codigo_ibge),
          codigo_regiao_covid = as.numeric(codigo_regiao_covid)) 
 
-# pegando novos dados
 
-temp <- tempfile()
-download.file("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais",temp, mode = 'wb')
-aux <- unzip(temp, list = T)[1]
-new_data <- read_csv2(unz(temp, filename = aux$Name), locale = readr::locale(encoding = "latin1"))
+# pegando novos dados CSV
 
-unlink(temp)
+new_data <- NULL
+new_data <- try(read_csv2("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais"))
+
+# pegando novos dados ZIP
+
+# temp <- tempfile()
+# download.file("https://secweb.procergs.com.br/isus-covid/api/v1/export/csv/hospitais",temp, mode = 'wb')
+# aux <- unzip(temp, list = T)[1]
+# new_data <- read_csv2(unz(temp, filename = aux$Name), locale = readr::locale(encoding = "latin1"))
+# 
+# unlink(temp)
 
 names(new_data)[1:30] <-  c("codigo_ibge_6_digitos", "municipio", "lat_mun", "lon_mun", "estado", "crs", "regiao_saude",
                        "codigo_macrorregiao_saude", "macrorregiao_saude", "codigo_regiao_covid",
@@ -391,9 +397,14 @@ new_data <- new_data %>%
 ultima_atualizacao <- ultima_atualizacao %>%
   filter(!data_atualizacao %in% unique(new_data$data_atualizacao))
 
-leitos_uti <- new_data %>%
-  add_case(ultima_atualizacao) %>%
-  distinct(cnes,data_atualizacao,.keep_all = T)
+if(nrow(ultima_atualizacao) != 0) {
+  leitos_uti <- new_data %>%
+    add_case(ultima_atualizacao) %>%
+    distinct(cnes,data_atualizacao,.keep_all = T)
+} else {
+  leitos_uti <- new_data %>%
+    distinct(cnes,data_atualizacao,.keep_all = T)
+}
 
 write_csv(leitos_uti,"dados/leitos/nova_base/ultima_atualizacao_2.csv")
 
