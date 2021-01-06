@@ -77,9 +77,9 @@ names(dados_ses)[1:27] <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_c
                       "bairro","hospitalizacao_srag","fonte_informacao")
 
 dados_covid_rs <- dados_ses %>%
-  mutate(data_confirmacao = as_date(data_confirmacao, format = "%d/%m/%y"),
-         data_sintomas = as_date(data_sintomas, format = "%d/%m/%y"),
-         data_evolucao = as_date(data_evolucao, format = "%d/%m/%y"),
+  mutate(data_confirmacao = as_date(data_confirmacao, format = "%d/%m/%Y"),
+         data_sintomas = as_date(data_sintomas, format = "%d/%m/%Y"),
+         data_evolucao = as_date(data_evolucao, format = "%d/%m/%Y"),
          municipio = str_to_title(municipio))
 
 # arrumando os 3 municipios com inconssistências nos nomes
