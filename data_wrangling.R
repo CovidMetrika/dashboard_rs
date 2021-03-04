@@ -52,6 +52,7 @@ rs_mesoregiao_microregiao <- read_csv("dados/mesoregiao/rs_mesoregiao_microregia
 # lendo arquivo com semana epidemoilógica para adicionar ao banco
 
 semana <- read_csv("dados/semana_epidemio_dia.csv")
+semana_20_21 <- read_csv("dados/semana_20_21.csv")
 
 # lendo dados da SES-RS
 
@@ -368,7 +369,7 @@ new_data <- new_data %>%
   padr::pad(start_val = min(new_data$data_atualizacao), end_val = max(new_data$data_atualizacao)) %>%
   group_by(cnes) %>%
   fill(everything(),.direction = "updown") %>%# preecnhendo os missings conforme grupo
-  left_join(semana, by = c("data_atualizacao" = "dia")) %>%
+  left_join(semana_20_21, by = c("data_atualizacao" = "dia")) %>%
   ungroup() %>%
   select(names(ultima_atualizacao)) %>%
   mutate(codigo_ibge = as.character(codigo_ibge),
@@ -442,13 +443,13 @@ leitos_mapa_reg_rs <- mapa_reg_rs %>%
 # adicionandp semana epidemiológica
 
 dados_covid_rs <- dados_covid_rs %>%
-  left_join(semana, by = c("data_confirmacao" = "dia")) %>%
+  left_join(semana_20_21, by = c("data_confirmacao" = "dia")) %>%
   mutate(semana_epidemiologica_confirmacao = semana_epidemiologica) %>%
   select(!semana_epidemiologica) %>%
-  left_join(semana, by = c("data_sintomas" = "dia")) %>%
+  left_join(semana_20_21, by = c("data_sintomas" = "dia")) %>%
   mutate(semana_epidemiologica_sintomas = semana_epidemiologica) %>%
   select(!semana_epidemiologica) %>%
-  left_join(semana, by = c("data_evolucao" = "dia")) %>%
+  left_join(semana_20_21, by = c("data_evolucao" = "dia")) %>%
   mutate(semana_epidemiologica_evolucao = semana_epidemiologica) %>%
   select(!semana_epidemiologica)
 
@@ -471,7 +472,7 @@ populacao_fee[populacao_fee$municipio=="Chiapeta","municipio"] <- "Chiapetta"
 # deixando só os objetos essenciais
 
 rm(list=setdiff(ls(),c("leitos_mapa_mun_rs","leitos_mapa_reg_rs","leitos_uti","dados_mapa_rs_reg",
-                       "dados_mapa_rs","dados_covid_rs","pop_regiao","populacao_fee")))
+                       "dados_mapa_rs","dados_covid_rs","pop_regiao","populacao_fee","semana_20_21")))
 
 #------------------------------------------------ 
 

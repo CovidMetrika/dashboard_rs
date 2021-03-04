@@ -1991,18 +1991,16 @@ server <- function(input, output) {
                 `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
       group_by(semana_epidemiologica) %>%
       summarise(`Leitos ocupados` = mean(`Leitos ocupados`, na.rm = T), 
-                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) %>%
-      arrange(semana_epidemiologica)
+                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) 
     
-    ordem <- as.character(unique(aux$semana_epidemiologica))
+    ordem <- pull(unique(semana_20_21[semana_20_21$semana_epidemiologica %in% aux$semana_epidemiologica,2]),"semana_epidemiologica")
     
-    aux$semana_epidemiologica <- as.character(aux$semana_epidemiologica)
+    aux$semana_epidemiologica <- factor(aux$semana_epidemiologica, levels = ordem)
     
     p <- ggplot(aux) +
       geom_col(aes(x = semana_epidemiologica, y = `Leitos ocupados`, label = lotacao), fill = "#605ca8") +
       geom_line(aes(x = semana_epidemiologica, y = `Total leitos`, group = 1), color = "#00a65a") +
       geom_point(aes(x = semana_epidemiologica, y = `Total leitos`), color = "#00a65a") +
-      scale_x_discrete(limits = ordem) +
       labs(y = "Média semanal de leitos ocupados") +
       theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
     
@@ -2070,18 +2068,16 @@ server <- function(input, output) {
                 `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T)) %>%
       group_by(semana_epidemiologica) %>%
       summarise(`Leitos ocupados` = mean(`Leitos ocupados`, na.rm = T), `Leitos disponíveis` = mean(`Total leitos`, na.rm = T) - mean(`Leitos ocupados`, na.rm = T),
-                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) %>%
-      arrange(semana_epidemiologica)
+                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) 
     
-    ordem <- as.character(unique(aux$semana_epidemiologica))
+    ordem <- pull(unique(semana_20_21[semana_20_21$semana_epidemiologica %in% aux$semana_epidemiologica,2]),"semana_epidemiologica")
     
-    aux$semana_epidemiologica <- as.character(aux$semana_epidemiologica)
+    aux$semana_epidemiologica <- factor(aux$semana_epidemiologica, levels = ordem)
     
     p <- ggplot(aux) +
       geom_col(aes(x = semana_epidemiologica, y = `Leitos disponíveis`), fill = "#0073b7") +
       geom_line(aes(x = semana_epidemiologica, y = `Total leitos`, group = 1), color = "#00a65a") +
       geom_point(aes(x = semana_epidemiologica, y = `Total leitos`), color = "#00a65a") +
-      scale_x_discrete(limits = ordem) +
       labs(y = "Média semanal de leitos disponíveis") +
       theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5))
     
@@ -2147,16 +2143,14 @@ server <- function(input, output) {
                 `Total leitos` = sum(leitos_total, na.rm = T), lotacao = sum(leitos_internacoes, na.rm = T)/sum(leitos_total, na.rm = T), `Leitos com covid` = sum(leitos_covid, na.rm = T)) %>%
       group_by(semana_epidemiologica) %>%
       summarise(`Leitos ocupados` = mean(`Leitos ocupados`, na.rm = T), `Leitos com covid` = mean(`Leitos com covid`, na.rm = T),
-                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T)) %>%
-      arrange(semana_epidemiologica)
+                `Total leitos` = mean(`Total leitos`, na.rm = T), lotacao = mean(`Leitos ocupados`, na.rm = T)/mean(`Total leitos`, na.rm = T))
     
-    ordem <- as.character(unique(aux$semana_epidemiologica))
+    ordem <- pull(unique(semana_20_21[semana_20_21$semana_epidemiologica %in% aux$semana_epidemiologica,2]),"semana_epidemiologica")
     
-    aux$semana_epidemiologica <- as.character(aux$semana_epidemiologica)
-    
+    aux$semana_epidemiologica <- factor(aux$semana_epidemiologica, levels = ordem)
+
     p <- ggplot(aux) +
       geom_col(aes(x = semana_epidemiologica, y = `Leitos com covid`), fill = "#d81b60") +
-      scale_x_discrete(limits = ordem) +
       scale_y_continuous(name = "Média semanal de leitos com covid", limits = c(0,max(aux$`Leitos com covid`+20))) +
       theme(axis.text.x = element_text(angle=45,size=8, vjust = 0.5)) 
     
