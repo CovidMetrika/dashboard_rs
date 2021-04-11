@@ -184,7 +184,7 @@ server <- function(input, output) {
   output$box_conf <- renderValueBox({
     
     aux <- dados_covid_rs %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      dplyr::filter(regiao_covid %in% input$filtro_geral) %>%
       group_by(regiao_covid) %>%
       summarise(confirmados = n(), populacao_estimada_regiao_covid = first(populacao_estimada_regiao_covid))
     
@@ -679,11 +679,10 @@ server <- function(input, output) {
         filter(regiao_covid %in% input$filtro_geral) %>%
         group_by(semana_epidemiologica_confirmacao) %>%
         summarise(confirmados = n(), confirmados_taxa = n()*100000/pop) %>%
-        mutate(frequencia = !!var) %>%
-        arrange(semana_epidemiologica_confirmacao)
+        mutate(frequencia = !!var)
       
-      n_weeks <- max(aux$semana_epidemiologica_confirmacao)-min(aux$semana_epidemiologica_confirmacao)
-      weeks <- min(aux$semana_epidemiologica_confirmacao):(min(aux$semana_epidemiologica_confirmacao)+n_weeks)
+      n_weeks <- max(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))-min(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))
+      weeks <- min(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0)):(min(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))+n_weeks)
     } else if(input$var_covid %in% c("obitos","obitos_taxa","recuperados","recuperados_taxa")){
       aux <- aux %>%
         filter(regiao_covid %in% input$filtro_geral) %>%
@@ -696,11 +695,10 @@ server <- function(input, output) {
         mutate(frequencia = !!var) %>%
         ungroup() %>%
         mutate(semana_epidemiologica_confirmacao = semana_epidemiologica_evolucao) %>%
-        select(-semana_epidemiologica_evolucao) %>%
-        arrange(semana_epidemiologica_confirmacao)
+        select(-semana_epidemiologica_evolucao)
       
-      n_weeks <- max(aux$semana_epidemiologica_confirmacao)-min(aux$semana_epidemiologica_confirmacao)
-      weeks <- min(aux$semana_epidemiologica_confirmacao):(min(aux$semana_epidemiologica_confirmacao)+n_weeks)
+      n_weeks <- max(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))-min(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))
+      weeks <- min(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0)):(min(as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))+n_weeks)
     } else {
       
       aux <- aux %>%
@@ -724,19 +722,20 @@ server <- function(input, output) {
         mutate(semana_epidemiologica_confirmacao = semana_epidemiologica_sintomas) %>%
         select(-semana_epidemiologica_sintomas)
       
+      n_weeks <- max(as.numeric(str_remove(negativos$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(negativos$semana_epidemiologica_confirmacao,"/21"),53,0),as.numeric(str_remove(acomp$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(acomp$semana_epidemiologica_confirmacao,"/21"),53,0))-min(as.numeric(str_remove(negativos$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(negativos$semana_epidemiologica_confirmacao,"/21"),53,0),as.numeric(str_remove(acomp$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(acomp$semana_epidemiologica_confirmacao,"/21"),53,0))
+      weeks <- min(as.numeric(str_remove(negativos$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(negativos$semana_epidemiologica_confirmacao,"/21"),53,0),as.numeric(str_remove(acomp$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(acomp$semana_epidemiologica_confirmacao,"/21"),53,0)):(min(as.numeric(str_remove(negativos$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(negativos$semana_epidemiologica_confirmacao,"/21"),53,0),as.numeric(str_remove(acomp$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(acomp$semana_epidemiologica_confirmacao,"/21"),53,0))+n_weeks)
       
-      n_weeks <- max(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao)-min(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao)
-      weeks <- min(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao):(min(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao)+n_weeks)
+      #n_weeks <- max(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao)-min(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao)
+      #weeks <- min(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao):(min(negativos$semana_epidemiologica_confirmacao,acomp$semana_epidemiologica_confirmacao)+n_weeks)
       
     }
     
     if(input$var_covid != "acompanhamento") {
-      
-      aux2 <- tibble(semana_epidemiologica_confirmacao = weeks[!(weeks %in% aux$semana_epidemiologica_confirmacao)],
+      as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0)
+      aux2 <- tibble(semana_epidemiologica_confirmacao = weeks[!(weeks %in% as.numeric(str_remove(aux$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(aux$semana_epidemiologica_confirmacao,"/21"),53,0))],
                      frequencia = 0)
       
-      aux <- bind_rows(aux,aux2) %>%
-        arrange(semana_epidemiologica_confirmacao)
+      aux <- bind_rows(aux,aux2)
       
       aux$acumulado <- c(aux$frequencia[1],rep(0,n_weeks))
       
@@ -748,15 +747,18 @@ server <- function(input, output) {
       caption_x <- "*Dados referentes à data de 'confirmação', e não 'notificação', portanto dados antigos são frequentemente adicionados"
       y_caption <- 0.99
       
-      ordem <- as.character(aux$semana_epidemiologica_confirmacao)
+      ordem <- unique(semana_20_21$semana_epidemiologica)[unique(as.numeric(str_remove(semana_20_21$semana_epidemiologica,"/.*"))+ifelse(str_detect(semana_20_21$semana_epidemiologica,"/21"),53,0)) %in% unique(aux$semana_epidemiologica_confirmacao)]
       
-      aux$semana_epidemiologica_confirmacao <- as.character(aux$semana_epidemiologica_confirmacao)
+      aux$semana_epidemiologica <- factor(aux$semana_epidemiologica, levels = ordem)
+      
+      #ordem <- as.character(aux$semana_epidemiologica_confirmacao)
+      
+      #aux$semana_epidemiologica_confirmacao <- as.character(aux$semana_epidemiologica_confirmacao)
       
       p <- ggplotly(ggplot(aux) +
                       geom_line(aes(x = semana_epidemiologica_confirmacao, y = acumulado, group = 1, color = "Acumulado"), linetype = 'dotted') +
                       geom_point(aes(x = semana_epidemiologica_confirmacao, y = acumulado, color = "Acumulado")) + 
                       geom_col(aes(x = semana_epidemiologica_confirmacao, y = frequencia, fill = "Frequência")) +
-                      scale_x_discrete(limits = ordem) +
                       scale_color_manual(values = list("Acumulado" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
                       scale_fill_manual(values = list("Frequência" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
                       labs(x = label_x, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colour = NULL, fill = NULL) +
@@ -780,17 +782,17 @@ server <- function(input, output) {
       
     } else {
       
-      negativos2 <- tibble(semana_epidemiologica_confirmacao = weeks[!(weeks %in% negativos$semana_epidemiologica_confirmacao)],
+      as.numeric(str_remove(acomp$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(acomp$semana_epidemiologica_confirmacao,"/21"),53,0)
+      
+      negativos2 <- tibble(semana_epidemiologica_confirmacao = weeks[!(weeks %in% as.numeric(str_remove(negativos$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(negativos$semana_epidemiologica_confirmacao,"/21"),53,0))],
                            negativos = 0)
       
-      negativos <- bind_rows(negativos,negativos2) %>%
-        arrange(semana_epidemiologica_confirmacao)
+      negativos <- bind_rows(negativos,negativos2) 
       
-      acomp2 <- tibble(semana_epidemiologica_confirmacao = weeks[!(weeks %in% acomp$semana_epidemiologica_confirmacao)],
+      acomp2 <- tibble(semana_epidemiologica_confirmacao = weeks[!(weeks %in% as.numeric(str_remove(acomp$semana_epidemiologica_confirmacao,"/.*"))+ifelse(str_detect(acomp$semana_epidemiologica_confirmacao,"/21"),53,0))],
                        frequencia = 0)
       
       acomp <- bind_rows(acomp,acomp2) %>%
-        arrange(semana_epidemiologica_confirmacao) %>%
         left_join(negativos, by = "semana_epidemiologica_confirmacao") %>%
         mutate(negativos = ifelse(is.na(negativos),0,negativos)) %>%
         mutate(frequencia = frequencia-negativos)
@@ -808,15 +810,18 @@ server <- function(input, output) {
       aux <- acomp %>%
         mutate(acumulado = ifelse(acumulado < 0, 0, acumulado))
       
-      ordem <- as.character(aux$semana_epidemiologica_confirmacao)
+      ordem <- unique(semana_20_21$semana_epidemiologica)[unique(as.numeric(str_remove(semana_20_21$semana_epidemiologica,"/.*"))+ifelse(str_detect(semana_20_21$semana_epidemiologica,"/21"),53,0)) %in% unique(aux$semana_epidemiologica_confirmacao)]
       
-      aux$semana_epidemiologica_confirmacao <- as.character(aux$semana_epidemiologica_confirmacao)
+      aux$semana_epidemiologica <- factor(aux$semana_epidemiologica, levels = ordem)
+      
+      #ordem <- as.character(aux$semana_epidemiologica_confirmacao)
+      
+      #aux$semana_epidemiologica_confirmacao <- as.character(aux$semana_epidemiologica_confirmacao)
       
       p <- ggplotly(ggplot(aux) +
                       geom_line(aes(x = semana_epidemiologica_confirmacao, y = acumulado, group = 1, color = "Em acompanhamento"), linetype = 'dotted') +
                       geom_point(aes(x = semana_epidemiologica_confirmacao, y = acumulado, color = "Em acompanhamento")) + 
                       geom_col(aes(x = semana_epidemiologica_confirmacao, y = frequencia, fill = "Frequência")) +
-                      scale_x_discrete(limits = ordem) +
                       scale_color_manual(values = list("Em acompanhamento" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
                       scale_fill_manual(values = list("Frequência" = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["cor"]])) +
                       labs(x = label_x, y = opcoes[[str_c(input$var_covid,input$tipo_covid)]][["texto"]], colour = NULL, fill = NULL) +
