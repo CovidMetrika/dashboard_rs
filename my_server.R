@@ -1422,8 +1422,8 @@ server <- function(input, output) {
   output$box_tot <- renderValueBox({
     aux <- leitos_uti %>%
       group_by(cnes) %>%
-      filter(data_atualizacao == input$data_leitos) %>%
-      filter(regiao_covid %in% input$filtro_geral)
+      filter(data_atualizacao == input$data_leitos) #%>%
+      #filter(regiao_covid %in% input$filtro_geral)
     
     valueBox(
       sum(aux$leitos_total),
@@ -1436,8 +1436,8 @@ server <- function(input, output) {
   output$box_int <- renderValueBox({
     aux <- leitos_uti %>%
       group_by(cnes) %>%
-      filter(data_atualizacao == input$data_leitos) %>%
-      filter(regiao_covid %in% input$filtro_geral)
+      filter(data_atualizacao == input$data_leitos) #%>%
+      #filter(regiao_covid %in% input$filtro_geral)
     
     valueBox(
       sum(aux$leitos_disponiveis),
@@ -1450,8 +1450,8 @@ server <- function(input, output) {
   output$box_lot <- renderValueBox({
     aux <- leitos_uti %>%
       group_by(cnes) %>%
-      filter(data_atualizacao == input$data_leitos) %>%
-      filter(regiao_covid %in% input$filtro_geral)
+      filter(data_atualizacao == input$data_leitos) #%>%
+      #filter(regiao_covid %in% input$filtro_geral)
     
     valueBox(
       paste0(round(100*sum(aux$leitos_internacoes)/sum(aux$leitos_total),2),"%"),
@@ -1464,8 +1464,8 @@ server <- function(input, output) {
   output$box_cov <- renderValueBox({
     aux <- leitos_uti %>%
       group_by(cnes) %>%
-      filter(data_atualizacao == input$data_leitos) %>%
-      filter(regiao_covid %in% input$filtro_geral)
+      filter(data_atualizacao == input$data_leitos) #%>%
+      #filter(regiao_covid %in% input$filtro_geral)
     
     valueBox(
       sum(aux$leitos_covid),
@@ -1486,7 +1486,7 @@ server <- function(input, output) {
       if (input$var_leitos != "lotacao") {
         aux_mapa <- leitos_uti %>%
           filter(!is.na(!!var)) %>%
-          filter(regiao_covid %in% input$filtro_geral) %>%
+          #filter(regiao_covid %in% input$filtro_geral) %>%
           group_by(cnes, latitude, longitude, hospital) %>%
           filter(data_atualizacao == input$data_leitos) %>%
           summarise(var = sum(!!var)) %>%
@@ -1494,7 +1494,7 @@ server <- function(input, output) {
       } else {
         aux_mapa <- leitos_uti %>%
           filter(!is.na(!!var)) %>%
-          filter(regiao_covid %in% input$filtro_geral) %>%
+          #filter(regiao_covid %in% input$filtro_geral) %>%
           group_by(cnes, latitude, longitude, hospital) %>%
           filter(data_atualizacao == input$data_leitos) %>%
           summarise(var = ifelse(sum(leitos_total)!=0,sum(leitos_internacoes)/sum(leitos_total),NA))
@@ -1502,11 +1502,11 @@ server <- function(input, output) {
       
     } else if (input$agrup_leitos == "municipio") {
       aux_mapa <- leitos_mapa_mun_rs %>%
-        mutate(var = !!var) %>%
-        filter(regiao_covid %in% input$filtro_geral)
+        mutate(var = !!var) #%>%
+        #filter(regiao_covid %in% input$filtro_geral)
     } else {
       aux_mapa <- leitos_mapa_reg_rs %>%
-        filter(regiao_covid %in% input$filtro_geral) %>%
+        #filter(regiao_covid %in% input$filtro_geral) %>%
         mutate(var = !!var)
     }
     
@@ -1670,7 +1670,7 @@ server <- function(input, output) {
     if (input$agrup_leitos != "hospital") {
       if(input$var_leitos != "lotacao") {
         aux <- leitos_uti %>%
-          filter(regiao_covid %in% input$filtro_geral) %>%
+          #filter(regiao_covid %in% input$filtro_geral) %>%
           group_by(cnes) %>%
           filter(data_atualizacao == input$data_leitos) %>%
           ungroup() %>%
@@ -1684,7 +1684,7 @@ server <- function(input, output) {
           arrange(desc(var))
       } else {
         aux <- leitos_uti %>%
-          filter(regiao_covid %in% input$filtro_geral) %>%
+          #filter(regiao_covid %in% input$filtro_geral) %>%
           group_by(cnes) %>%
           filter(data_atualizacao == input$data_leitos) %>%
           ungroup() %>%
@@ -1701,7 +1701,7 @@ server <- function(input, output) {
       
     } else {
       aux <- leitos_uti %>%
-        filter(regiao_covid %in% input$filtro_geral) %>%
+        #filter(regiao_covid %in% input$filtro_geral) %>%
         group_by(cnes) %>%
         filter(data_atualizacao == input$data_leitos) %>%
         ungroup() %>%
@@ -1745,7 +1745,7 @@ server <- function(input, output) {
     if (input$agrup_leitos != "hospital") {
       if(input$var_leitos != "lotacao") {
         aux <- leitos_uti %>%
-          filter(regiao_covid %in% input$filtro_geral) %>%
+          #filter(regiao_covid %in% input$filtro_geral) %>%
           group_by(cnes) %>%
           filter(data_atualizacao == input$data_leitos) %>%
           ungroup() %>%
@@ -1759,7 +1759,7 @@ server <- function(input, output) {
           arrange(desc(var))
       } else {
         aux <- leitos_uti %>%
-          filter(regiao_covid %in% input$filtro_geral) %>%
+          #filter(regiao_covid %in% input$filtro_geral) %>%
           group_by(cnes) %>%
           filter(data_atualizacao == input$data_leitos) %>%
           ungroup() %>%
@@ -1776,7 +1776,7 @@ server <- function(input, output) {
       
     } else {
       aux <- leitos_uti %>%
-        filter(regiao_covid %in% input$filtro_geral) %>%
+        #filter(regiao_covid %in% input$filtro_geral) %>%
         group_by(cnes) %>%
         filter(data_atualizacao == input$data_leitos) %>%
         ungroup() %>%
@@ -1836,7 +1836,7 @@ server <- function(input, output) {
     var2 <- rlang::sym(input$agrup_leitos)
     
     aux <- leitos_uti %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       filter(!is.na(leitos_total) & leitos_total != 0) %>%
       as.data.frame()
@@ -1852,7 +1852,7 @@ server <- function(input, output) {
     }
     
     aux_covid <- leitos_uti %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       filter(!is.na(leitos_covid) & leitos_covid != 0) %>%
       as.data.frame()
@@ -1951,7 +1951,7 @@ server <- function(input, output) {
     }
     
     aux <- aux %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       group_by(data_atualizacao) %>%
       summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
@@ -1989,7 +1989,7 @@ server <- function(input, output) {
     }
     
     aux <- aux %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       group_by(data_atualizacao, semana_epidemiologica) %>%
       summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
@@ -2028,7 +2028,7 @@ server <- function(input, output) {
     }
     
     aux <- aux %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       group_by(data_atualizacao) %>%
       summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos disponíveis` = sum(leitos_total-leitos_internacoes, na.rm =T),
@@ -2066,7 +2066,7 @@ server <- function(input, output) {
     }
     
     aux <- aux %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       group_by(data_atualizacao, semana_epidemiologica) %>%
       summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
@@ -2105,7 +2105,7 @@ server <- function(input, output) {
     }
     
     aux <- aux %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       group_by(data_atualizacao) %>%
       summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos com covid` = sum(leitos_covid, na.rm =T),
@@ -2141,7 +2141,7 @@ server <- function(input, output) {
     }
     
     aux <- aux %>%
-      filter(regiao_covid %in% input$filtro_geral) %>%
+      #filter(regiao_covid %in% input$filtro_geral) %>%
       filter(data_atualizacao <= input$data_leitos) %>%
       group_by(data_atualizacao, semana_epidemiologica) %>%
       summarise(`Leitos ocupados` = sum(leitos_internacoes, na.rm = T), `Leitos sem covid` = sum(leitos_internacoes, na.rm =T) - sum(leitos_covid, na.rm = T),
