@@ -108,9 +108,8 @@ caixinha_hospital <- function(var1,var2,var3) {
 # infelizmente fazer essa mudança causa erro nas funções das barras de progresso
 # até achar uma solução vou deixar comentado o comando
 
-header <- dashboardHeaderPlus(
-  enable_rightsidebar = T,
-  rightSidebarIcon = "gears",
+header <- dashboardHeader(
+  controlbarIcon = "gears",
   title = tagList(
     span(class = "logo-lg", "Painel COVID-19 RS"), 
     icon = icon("tachometer-alt")),
@@ -127,7 +126,7 @@ sidebar <- dashboardSidebar(
   width = 180
 )
 
-rightsidebar <- rightSidebar(
+controlbar <- dashboardControlbar(
   width = 400,
   h3("Digite as regiões de interesse"),
   selectizeInput("filtro_geral",
@@ -397,77 +396,90 @@ body <- dashboardBody(
                 )
               ),
               fluidRow(
-                widgetUserBox(
-                  title = tags$b("Franciele Lobo Pallaoro"),
-                  subtitle = "Estudante de Estatística da UFRGS",
-                  type = 2,
+                setShadow(class = "box"), # aplicando efeito de sombra nas boxes do grupo
+                
+                userBox(
+                  title = userDescription(
+                    title = tags$b("Franciele Lobo Pallaoro"),
+                    subtitle = "Estudante de Estatística da UFRGS",
+                    type = 2,
+                    image = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/franciele.jpg?raw=true'
+                  ),
                   width = 4,
-                  src = 'franciele.jpg',
-                  color = "red",
+                  status = "danger",
                   "Contato: franpallaoro@gmail.com",
                   footer_padding = F
                 ),
                 
-                widgetUserBox(
-                  title = tags$b("Gabriel Holmer Saul"),
-                  subtitle = "Estudante de Estatística da UFRGS",
-                  type = 2,
+                userBox(
+                  title = userDescription(
+                    title = tags$b("Gabriel Holmer Saul"),
+                    subtitle = "Estudante de Estatística da UFRGS",
+                    type = 2,
+                    image = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/gabriel.jpg?raw=true'
+                  ),
                   width = 4,
-                  src = "gabriel.jpg",
-                  color = "red",
+                  status = "danger",
                   "Contato: gabrielholmersaul@gmail.com",
                   footer_padding = F
                 )
                 ,
                 
-                widgetUserBox(
-                  title = tags$b("Gustavo Machado Utpott"),
-                  subtitle = "Estudante de Estatística da UFRGS",
-                  type = 2,
+                userBox(
+                  title = userDescription(
+                    title = tags$b("Gustavo Machado Utpott"),
+                    subtitle = "Estudante de Estatística da UFRGS",
+                    type = 2,
+                    image = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/gustavo.png?raw=true',
+                  ),
                   width = 4,
-                  src = "gustavo.png",
-                  color = "red",
+                  status = "danger",
                   "Contato: gustavo.utpott@gmail.com",
                   footer_padding = F
                 ),
                 
-                widgetUserBox(
-                  title = tags$b("Juliana Sena de Souza"),
-                  subtitle = "Estudante de Pós-Graduação em Epidemiologia da UFRGS",
-                  type = 2,
+                userBox(
+                  title = userDescription(
+                    title = tags$b("Juliana Sena de Souza"),
+                    subtitle = "Estudante de Pós-Graduação em Epidemiologia da UFRGS",
+                    type = 2,
+                    image =  'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/juliana.jpeg?raw=true',
+                  ),
                   width = 4,
-                  src =  "juliana.jpeg",
-                  color = "red",
+                  status = "danger",
                   "Contato: julianass.estatistica@gmail.com",
                   footer_padding = F
                 ),
                 
                 
-                widgetUserBox(
-                  title = tags$b("Márcia Helena Barbian"),
-                  subtitle = "Professora do Departamento de Estatística da UFRGS",
-                  type = 2,
+                userBox(
+                  title = userDescription(
+                    title = tags$b("Márcia Helena Barbian"),
+                    subtitle = "Professora do Departamento de Estatística da UFRGS",
+                    type = 2,
+                    image = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/marcia.png?raw=true',
+                  ),
                   width = 4,
-                  src = "marcia.png",
-                  color = "red",
-                  "Contato: mhbarbian@ufrgs.br",
+                  status = "danger",
+                  "Contato: mhbarbian@ufrgs.br", 
                   footer_padding = F
                 ), 
                 
-                widgetUserBox(
-                  title = tags$b("Rodrigo Citton P. dos Reis"),
-                  subtitle = "Professor do Departamento de Estatística da UFRGS",
-                  type = 2,
+                userBox(
+                  title = userDescription(
+                    title = tags$b("Rodrigo Citton P. dos Reis"),
+                    subtitle = "Professor do Departamento de Estatística da UFRGS",
+                    type = 2,
+                    image = 'https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/rodrigo.jpg?raw=true'
+                  ),
                   width = 4,
-                  src = "rodrigo.jpg",
-                  color = "red",
+                  status = "danger",
                   "Contato: citton.padilha@ufrgs.br",
                   footer_padding = F
                 ), 
                 
-                tags$img(src = "logos.png", 
-                         width = "100%")
-                
+                tags$img(src = "https://github.com/franpallaoro/COVID-19/blob/ssjuliana/Dashboard/fotos/logos.png?raw=true", 
+                         height = "150", width = "1000")
               )
               
               
@@ -476,5 +488,5 @@ body <- dashboardBody(
   )
 )
 
-ui <- dashboardPagePlus(enable_preloader = T, rightsidebar = rightsidebar, header = header, sidebar = sidebar, 
+ui <- dashboardPage(preloader = list(html = waiter::spin_1(), color = "#333e48"), controlbar = controlbar, header = header, sidebar = sidebar, 
                         body = body, skin = "red")

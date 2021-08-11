@@ -69,9 +69,9 @@ if(request$status_code == 404) {
   write_csv(dados_ses,"dados/covid/ses_reserva.csv")
 }
 
-names(dados_ses)[1:27] <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid","regiao_covid",
+names(dados_ses)[1:28] <- c("codigo_ibge_6_digitos","municipio","codigo_regiao_covid","regiao_covid",
                       "sexo","faixa_etaria","tipo_teste",
-                      "data_confirmacao","data_sintomas","data_evolucao","evolucao","hospitalizacao",
+                      "data_confirmacao","data_sintomas","data_inclusao","data_evolucao","evolucao","hospitalizacao",
                       "sintoma_febre","sintoma_tosse",
                       "sintoma_garganta","sintoma_dispneia","sintomas_outros","comorbidades","gestante",
                       "data_inclusao_obito","data_evolucao_estimada","raca_cor","etnia_indigena","profissional_de_saude",
