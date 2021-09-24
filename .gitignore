@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+dados/covid/ses_reserva.csv
+dados/leitos/nova_base/ultima_atualizacao_2.csv
