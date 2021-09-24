@@ -65,6 +65,8 @@ request <- GET(url = path)
 
 if(request$status_code == 404) {
   dados_ses <- read_csv("dados/covid/ses_reserva.csv")
+} else if (sum(dados_ses$COD_IBGE == "\n")!=0) { # abordando o caso em que seguidamente a base de dados vem em formato errado para não quebrar o app
+  dados_ses <- read_csv("bancos/covid/ses_reserva.csv")
 } else {
   write_csv(dados_ses,"dados/covid/ses_reserva.csv")
 }
