@@ -319,7 +319,7 @@ dados_mapa_rs_reg <- mapa_reg_rs %>%
 
 # pegando último banco atualizado na nossa base
 
-ultima_atualizacao <- read_csv("dados/leitos/nova_base/ultima_atualizacao_2.csv") %>%
+ultima_atualizacao <- read_csv("dados/leitos/nova_base/ultima_atualizacao_3.csv") %>%
   mutate(codigo_ibge = as.character(codigo_ibge),
          codigo_regiao_covid = as.numeric(codigo_regiao_covid)) 
 
@@ -420,7 +420,7 @@ if(nrow(ultima_atualizacao) != 0) {
     distinct(cnes,data_atualizacao,.keep_all = T)
 }
 
-write_csv(leitos_uti,"dados/leitos/nova_base/ultima_atualizacao_2.csv")
+try(write_csv(leitos_uti,"dados/leitos/nova_base/ultima_atualizacao_3.csv"))
 
 
 leitos_join_mun <- leitos_uti %>%
